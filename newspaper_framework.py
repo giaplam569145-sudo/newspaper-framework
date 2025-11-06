@@ -108,15 +108,15 @@ class NewspaperFrameWork:
         try:
             article = Article(title=title, content=content, **kwargs)
             self.articles.append(article)
-            print(f"✅ Artikel '{title[:30]}...' erfolgreich hinzugefügt")
+            print(f"Artikel '{title[:30]}...' erfolgreich hinzugefuegt")
             return article
         except NewspaperFrameworkWarning as e:
-            print(f"⚠️  Warnung: {e}")
+            print(f"Warnung: {e}")
             # Versuche automatische Korrektur
-            corrected_content = content + " (Inhalt automatisch vervollständigt)"
+            corrected_content = content + " (Inhalt automatisch vervollstaendigt)")
             article = Article(title=title, content=corrected_content, **kwargs)
             self.articles.append(article)
-            print(f"✅ Artikel mit automatischer Korrektur hinzugefügt")
+            print(f"Artikel mit automatischer Korrektur hinzugefuegt")
             return article
     
     def generate(self) -> Dict:
@@ -232,7 +232,7 @@ def create_sample_newspaper():
 
 if __name__ == "__main__":
     # Automatische Demo beim direkten Ausführen
-    print("🚀 Newspaper Framework Demo wird gestartet...")
+    print("Newspaper Framework Demo wird gestartet...")
     create_sample_newspaper()
-    print("✅ Demo erfolgreich abgeschlossen!")
-    print("📄 Dateien erstellt: beispiel_zeitung.html, beispiel_zeitung.json")
+    print("Demo erfolgreich abgeschlossen!")
+    print("Dateien erstellt: beispiel_zeitung.html, beispiel_zeitung.json")
