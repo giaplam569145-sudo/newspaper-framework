@@ -132,6 +132,35 @@ class NewspaperFrameWork:
         # Validierung
         if not self.title:
             raise NewspaperFrameworkWarning("❌ Zeitungstitel darf nicht leer sein")
+
+
+class QuizSystem:
+    """
+    Quiz-System für interaktive Zeitungsinhalte
+    
+    VERWENDUNG FÜR DAS LLM:
+    1. Quiz erstellen: quiz = QuizSystem()
+    2. Fragen hinzufügen: quiz.add_question(...)
+    3. Quiz zur Zeitung hinzufügen: paper.add_quiz(quiz)
+    """
+    
+    def __init__(self, title: str = "Tagesquiz"):
+        """
+        Quiz-System initialisieren
+        """
+        self.title = title
+        self.questions: List[Question] = []
+    
+    def add_question(self, question: str, options: List[str], correct_index: int):
+        """
+        self.title = title
+        self.questions = []
+    
+    def generate_quiz(self) -> Dict:
+        """
+        Quiz generieren mit allen Fragen und Antworten
+    """
+        pass
         self.logo_content: Optional[str] = None
     
     def add_article(self, title: str, content: str, **kwargs) -> Article:

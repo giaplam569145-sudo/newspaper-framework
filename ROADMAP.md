@@ -1,58 +1,53 @@
 # Newspaper Framework Roadmap
 
-##   Aus Nutzerperspektive wünschenswert:
+##   Aktuelle Prioritäten
 
-### 1. **Interaktive Elemente**
-- Quiz-System für Leser-Engagement
-- Umfragen zu aktuellen Themen
-- Leser-Kommentar-Sektion
-- Abstimungen zu kontroversen Themen
+### **Sprint 1: Quiz-System (Next Release)**
+- Multiple-Choice-Fragen-System
+- Antwort-Validierung
+- Score-Berechnung
+- Ergebnis-Darstellung
 
-### 2. **Template-System**
+### **Sprint 2: Template-Manager
 - Vordefinierte Zeitungsvorlagen
 - Drag & Drop Layout-Editor
-- Vorlagen-Manager für verschiedene Zeitungstypen (Tageszeitung, Wochenblatt, Fachzeitschrift)
+- Vorlagen-Manager für verschiedene Zeitungstypen
+- Template-Repository für wiederverwendbare Designs
 
-### 3. **Analytics & Metriken**
-- Leser-Engagement-Tracker
-- Artikel-Performance-Analyse
-- Automatische A/B-Testing
+### **Sprint 3: Analytics-Grundfunktionen**
+- Artikel-Lesezeit-Tracker
+- Engagement-Metriken
+- Performance-Dashboard
 
-### 4. **Social Media Integration**
+### **Sprint 4: Social Media Integration**
 - Automatische Posts für Twitter, Facebook, Instagram
 - Social-Media-Preview-System
 
-### 5. **Automatische Layout-Optimierung**
-- KI-gestützte Platzierung von Inhalten
-- Responsive Design für alle Geräte
+##   Konkrete Implementierungs-Schritte:
 
-### 6. **Multimediale Features**
-- Video-Einbettung
-- Audio-Player für Podcasts
-- Galerie-System für Bilderserien
+### **Phase 1: Quiz-Funktionalität
+1. Question-Klasse mit Antwort-Optionen
+2. Quiz-Manager für Zeitungsintegration
+3. Responsive Design für alle Geräte
 
-### 7. **Enterprise-Features**
-- Team-Kollaboration
+##   Kurzfristige Ziele (2 Wochen):
+- Quiz-System mit 5-10 Beispiel-Fragen
+- Integration in bestehende Zeitungsstruktur
+- Test-Suite für Quiz-Funktionen
+
+### **Phase 2: Template-System**
+- Preset-Layouts für verschiedene Anwendungsfälle
+- Multiple-Choice mit 4 Antwortmöglichkeiten
+- Automatische Auswertung
+
+##   Mittelfristige Ziele (1 Monat):
+- Analytics-Dashboard-Grundgerüst
+- Basis-Metriken-Sammlung
+
+### **Phase 3: Enterprise-Features**
+- Team-Kollaborations-Werkzeuge
 - Workflow-Management
 - Version-Kontrolle
 
-### 8. **Internationalisierung**
-- Mehrsprachige Unterstützung
-- Lokalisierung für verschiedene Märkte
-
-### 9. **API & Integrationen**
-- REST-API für externe Systeme
-- Webhook-System
-- Plugin-Architektur
-
-##   Priorität 1 (Next Release):
-- Interaktive Quiz-Funktionalität
-- Basis-Template-System
-
-##   Vision:
-**"Ein Framework, das so intuitiv ist, dass selbst ein Anfänger-LLM eine professionelle Zeitung erstellen kann"
-
-### Features für Version 2.0:
-1. Quiz-System mit Multiple-Choice-Fragen
-2. Template-Manager für wiederverwendbare Designs
-3. Grundlegende Analytics für Artikel-Performance
+##   Langfristige Vision:
+**"Ein Framework, das so intuitiv ist, dass selbst ein Anfänger-LLM eine professionelle Zeitung erstellen kann**
