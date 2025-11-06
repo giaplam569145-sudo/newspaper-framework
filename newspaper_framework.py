@@ -65,6 +65,46 @@ class LayoutConfig:
     spacing: int = 20
 
 
+@dataclass
+class MediaConfig:
+    """Medien-Konfiguration für Bilder und Logo"""
+    logo_path: Optional[str] = None
+    logo_width: int = 200
+    logo_height: int = 60
+    image_quality: int = 85
+    supported_formats: List[str] = None
+    
+    def __post_init__(self):
+        if self.supported_formats is None:
+            self.supported_formats = ["png", "jpg", "jpeg", "gif", "svg"]
+        
+
+@dataclass
+class Article:
+    """Artikel-Dataklasse für strukturierte Inhalte"""
+    title: str
+    content: str
+    author: str = "Unbekannt"
+    category: str = "Allgemein"
+    priority: int = 1  # 1-5, 1 = höchste Priorität
+    image_path: Optional[str] = None
+    image_caption: Optional[str] = None
+    
+    def __post_init__(self):
+        """Automatische Validierung und Korrektur"""
+        # Titel automatisch trimmen
+        self.title = self.title.strip()
+        
+        # Content validieren
+        if not self.content or len(self.content.strip()) < 10:
+            raise NewspaperFrameworkWarning(
+                "❌ Artikelinhalt zu kurz (min. 10 Zeichen). Bitte mehr Inhalt hinzufügen."
+            )
+        
+        # Priority bounds check
+        self.priority = max(1, min(5, self.priority))
+
+
 class NewspaperFrameWork:
     """
     HAUPT-FRAMEWORK-KLASSE FÜR LLMs
@@ -76,7 +116,7 @@ class NewspaperFrameWork:
     4. Exportieren: paper.export_pdf() oder paper.export_html()
     """
     
-    def __init__(self, title: str = "Morgenzeitung", layout: Optional[LayoutConfig] = None):
+    def __init__(self, title: str = "Morgenzeitung", layout: Optional[LayoutConfig] = None, media: Optional[MediaConfig] = None):
         """
         Framework initialisieren
         
@@ -85,12 +125,34 @@ class NewspaperFrameWork:
         """
         self.title = title.strip()
         self.layout = layout or LayoutConfig()
+        self.media = media or MediaConfig()
         self.articles: List[Article] = []
         self.date = datetime.datetime.now().strftime("%d.%m.%Y")
         
         # Validierung
         if not self.title:
             raise NewspaperFrameworkWarning("❌ Zeitungstitel darf nicht leer sein")
+        self.logo_content: Optional[str] = None
+    
+    def add_article(self, title: str, content: str, **kwargs) -> Article:
+        """
+        Artikel zur Zeitung hinzufügen
+        
+        BEISPIEL FÜR DAS LLM:
+        paper.add_article(
+            title="KI revolutioniert Zeitungswesen",
+            content="Neue Framework erleichtert KI-gestützte Zeitungsproduktion...",
+            author="KI-Redakteur",
+            category="Technologie",
+            priority=1
+        )
+        """
+    def set_logo(self, logo_path: str) -> None:
+        """
+        Logo für die Zeitung setzen
+        
+        BEISPIEL FÜR DAS LLM:
+        paper.set_logo('logo.png')
     
     def add_article(self, title: str, content: str, **kwargs) -> Article:
         """
@@ -113,7 +175,7 @@ class NewspaperFrameWork:
         except NewspaperFrameworkWarning as e:
             print(f"Warnung: {e}")
             # Versuche automatische Korrektur
-            corrected_content = content + " (Inhalt automatisch vervollstaendigt)")
+            corrected_content = content + " (Inhalt automatisch vervollstaendigt)"
             article = Article(title=title, content=corrected_content, **kwargs)
             self.articles.append(article)
             print(f"Artikel mit automatischer Korrektur hinzugefuegt")
@@ -126,12 +188,12 @@ class NewspaperFrameWork:
         HINWEIS FÜR DAS LLM: Diese Methode validiert automatisch die gesamte Zeitung
         und gibt hilfreiche Feedback-Nachrichten.
         """
-        print("🔧 Generiere Zeitung...")
+        print("Generiere Zeitung...")
         
         # Validierung der Gesamtzeitung
         if len(self.articles) == 0:
             raise NewspaperFrameworkWarning(
-                "❌ Keine Artikel vorhanden. Bitte zuerst Artikel mit add_article() hinzufügen."
+                "Keine Artikel vorhanden. Bitte zuerst Artikel mit add_article() hinzufügen."
             )
         
         # Artikel nach Priorität sortieren
@@ -146,16 +208,38 @@ class NewspaperFrameWork:
             "statistics": {
                 "total_articles": len(self.articles),
                 "categories": list(set(a.category for a in self.articles)),
-                "authors": list(set(a.author for a in self.articles))
-            }
+            "authors": list(set(a.author for a in self.articles))
         }
         
-        print(f"✅ Zeitung erfolgreich generiert: {len(self.articles)} Artikel, {newspaper_data['statistics']['categories']} Kategorien")
+        print(f"Zeitung erfolgreich generiert: {len(self.articles)} Artikel, {newspaper_data['statistics']['categories']} Kategorien")
         return newspaper_data
     
     def export_html(self, filename: str = "zeitung.html") -> str:
         """Exportieren als HTML mit responsivem Design"""
         data = self.generate()
+        
+        # Design-Themes definieren
+        themes = {
+            "classic": {
+                "primary": "#2c3e50",
+                "secondary": "#3498db"
+            },
+            "modern": {
+                "primary": "#1a1a1a",
+                "secondary": "#e74c3c"
+            },
+            "minimal": {
+                "primary": "#333333",
+                "secondary": "#95a5a6"
+            },
+            "premium": {
+                "primary": "#8e44ad",
+                "secondary": "#f39c12"
+            }
+        }
+        
+        # Standard-Theme verwenden
+        theme = themes.get("classic", themes["classic"]
         
         html_content = f"""
         <!DOCTYPE html>
@@ -165,9 +249,9 @@ class NewspaperFrameWork:
             <title>{data['title']}</title>
             <style>
                 body {{ font-family: {data['layout']['font_family']}; max-width: {data['layout']['max_width']}px; margin: 0 auto; padding: 20px; }}
-                .header {{ text-align: center; color: {data['layout']['primary_color']}; border-bottom: 2px solid {data['layout']['secondary_color']}; margin-bottom: 30px; }}
-                .article {{ margin-bottom: {data['layout']['spacing']}px; padding: 15px; border-left: 3px solid {data['layout']['secondary_color']}; }}
-                .article-title {{ color: {data['layout']['primary_color']}; margin-top: 0; }}
+                .header {{ text-align: center; color: {theme['primary']}; border-bottom: 2px solid {theme['secondary']}; margin-bottom: 30px; }}
+                .article {{ margin-bottom: {data['layout']['spacing']}px; padding: 15px; border-left: 3px solid {theme['secondary']}; }}
+                .article-title {{ color: {theme['primary']}; margin-top: 0; }}
                 .meta {{ color: #666; font-size: 0.9em; }}
             </style>
         </head>
