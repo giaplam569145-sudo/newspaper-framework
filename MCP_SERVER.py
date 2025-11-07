@@ -19,21 +19,28 @@ from mcp import MCPServer
 from newspaper_framework import NewspaperFrameWork, QuizSystem
 
 class NewspaperMCPServer:
-    """
-    MCP-Server für Newspaper Framework
+    """An MCP server for the Newspaper Framework.
 
-    VERWENDUNG FÜR DAS LLM:
-    - Framework-Funktionen über MCP verfügbar machen
-    - JSON-RPC basierte Kommunikation
-    - Standardisierte Tool-Aufrufe
+    This class exposes the framework's functionalities over the MCP protocol,
+    allowing AI agents to interact with it through standardized tool calls.
+
+    Attributes:
+        newspapers (Dict[str, NewspaperFrameWork]): A dictionary to store
+            and manage newspaper instances.
     """
 
     def __init__(self):
+        """Initializes the NewspaperMCPServer."""
         self.newspapers = {}
     
     def create_newspaper(self, title: str) -> Dict:
-        """
-        Neues Zeitung erstellen über MCP
+        """Creates a new newspaper via an MCP tool call.
+
+        Args:
+            title (str): The title for the new newspaper.
+
+        Returns:
+            Dict: A dictionary containing the ID and title of the new newspaper.
         """
         paper = NewspaperFrameWork(title)
         newspaper_id = f"np_{len(self.newspapers)}"
@@ -41,8 +48,15 @@ class NewspaperMCPServer:
         return {"id": newspaper_id, "title": title}
     
     def add_article_via_mcp(self, newspaper_id: str, article_data: Dict) -> Dict:
-        """
-        Artikel über MCP hinzufügen
+        """Adds an article to a newspaper via an MCP tool call.
+
+        Args:
+            newspaper_id (str): The ID of the newspaper to add the article to.
+            article_data (Dict): A dictionary containing the article's data.
+
+        Returns:
+            Dict: A confirmation dictionary with the new article's ID, or
+                an error message.
         """
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
@@ -51,21 +65,28 @@ class NewspaperMCPServer:
         article = paper.add_article(
             title=article_data.get("title", ""),
             content=article_data.get("content", ""),
-            author=article_data.get("author", "Unbekannt"),
-            category=article_data.get("category", "Allgemein"),
+            author=article_data.get("author", "Unknown"),
+            category=article_data.get("category", "General"),
             priority=article_data.get("priority", 1)
         )
         return {"success": True, "article_id": len(paper.articles)}
     
     def export_newspaper_via_mcp(self, newspaper_id: str, format: str = "html") -> Dict:
-        """
-        Zeitung über MCP exportieren
+        """Exports a newspaper via an MCP tool call.
+
+        Args:
+            newspaper_id (str): The ID of the newspaper to export.
+            format (str): The export format ('html' or 'json').
+
+        Returns:
+            Dict: A confirmation dictionary with the exported file's name, or
+                an error message.
         """
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
         
         paper = self.newspapers[newspaper_id]
-        filename = f"{newspaper_id}_zeitung.{format}"
+        filename = f"{newspaper_id}_newspaper.{format}"
         
         if format == "html":
             paper.export_html(filename)
@@ -74,20 +95,14 @@ class NewspaperMCPServer:
         
         return {"success": True, "filename": filename}
 
-# MCP-Server implementierung
 async def main():
-    """
-    MCP-Server für Framework-Integration
-    """
-    print("🚀 Newspaper Framework MCP Server startet...")
+    """Initializes and runs the MCP server."""
+    print("Starting Newspaper Framework MCP Server...")
     
-    # MCP-Server initialisieren
     server = MCPServer()
     
-    # Framework-Funktionen als MCP-Tools verfügbar machen
     mcp_server = NewspaperMCPServer()
     
-    # Tools registrieren
     server.add_tool("create_newspaper", mcp_server.create_newspaper)
     server.add_tool("add_article", mcp_server.add_article_via_mcp)
     server.add_tool("export_newspaper", mcp_server.export_newspaper_via_mcp)

@@ -1,135 +1,135 @@
-# Newspaper Framework für LLMs
+# Newspaper Framework for LLMs
 
-Ein einfaches, fehlertolerantes Framework für KI-gestützte Zeitungsproduktion mit erweiterten Medienfunktionen.
+A simple, fault-tolerant framework for AI-powered newspaper production with advanced media features.
 
-##   Ziel
+## Goal
 
-Ermöglicht es LLMs, hochwertige Morgenzeitungen mit minimalem Aufwand zu erstellen, während das Framework für konsistente Qualität und automatische Fehlerkorrektur sorgt.
+To enable LLMs to create high-quality morning newspapers with minimal effort, while the framework ensures consistent quality and automatic error correction.
 
-##   Schnellstart
+## Quick Start
 
 ```python
 from newspaper_framework import NewspaperFrameWork, QuizSystem
 
-# Framework erstellen
-paper = NewspaperFrameWork("AI Morgenzeitung")
+# Create the framework
+paper = NewspaperFrameWork("AI Morning News")
 
-# Artikel hinzufügen (das LLM ersetzt diese mit eigenen Inhalten)
+# Add an article (the LLM replaces this with its own content)
 paper.add_article(
-    title="KI revolutioniert Zeitungswesen",
-    content="Neue Framework erleichtert KI-gestützte Zeitungsproduktion...",
-    author="KI-Redakteur",
-    category="Technologie",
+    title="AI Revolutionizes the Newspaper Industry",
+    content="New framework facilitates AI-powered newspaper production...",
+    author="AI Editor",
+    category="Technology",
     priority=1,
     image_path="tech_image.jpg",
-    image_caption="KI in der Medienproduktion"
+    image_caption="AI in media production"
 )
 
-# Logo setzen
+# Set the logo
 paper.set_logo("logo.png")
 
-# Quiz hinzufügen
-quiz = QuizSystem("Technologie-Quiz")
+# Add a quiz
+quiz = QuizSystem("Technology Quiz")
 quiz.add_question(
-    "Was ist KI?",
-    ["Künstliche Intelligenz", "Küche International", "Kaufmanns-Institut", "Keine Ahnung"],
+    "What is AI?",
+    ["Artificial Intelligence", "Kitchen International", "Merchant Institute", "No Idea"],
     0,
-    "Technologie"
+    "Technology"
 )
 paper.add_quiz(quiz)
 
-# Sudoku hinzufügen
+# Add a Sudoku puzzle
 paper.add_sudoku("medium")
 
-# Exportieren
-paper.export_html("meine_zeitung.html")
-paper.export_json("meine_zeitung.json")
+# Export
+paper.export_html("my_newspaper.html")
+paper.export_json("my_newspaper.json")
 ```
 
-##  📋 Features
+## 📋 Features
 
-- ✅ **LLM-freundliche API**: Intuitive Methodennamen und klare Rückmeldungen
-- ✅ **Automatische Validierung**: Inhalte werden automatisch geprüft und korrigiert
-- ✅ **Design-System**: Konsistente Layouts ohne Design-Overhead
-- ✅ **Fehlertolerant**: Sanfte Korrekturen statt harter Fehler
-- ✅ **Ein-File-Lösung**: Einfache Distribution per Chat-Nachricht
-- ✅ **Responsive Export**: HTML, JSON, PDF (optional)
-- ✅ **Token-effizient**: LLMs können sich auf Inhalt konzentrieren
-- ✅ **Konsistente Qualität**: Garantierte Ausgabequalität
-- ✅ **Logo/Banner-Integration**: Einfache Logo-Verwaltung
-- ✅ **Bildunterstützung**: Artikelbilder mit Captions
-- ✅ **Interaktive Quiz**: Frage-Antwort-Systeme
-- ✅ **Sudoku-Rätsel**: Automatische Sudoku-Generierung
-- ✅ **Responsive Design**: Mobile-optimierte Ausgabe
+- ✅ **LLM-Friendly API**: Intuitive method names and clear feedback.
+- ✅ **Automatic Validation**: Content is automatically checked and corrected.
+- ✅ **Design System**: Consistent layouts without design overhead.
+- ✅ **Fault-Tolerant**: Gentle corrections instead of hard errors.
+- ✅ **Single-File Solution**: Easy distribution via chat messages.
+- ✅ **Responsive Export**: HTML, JSON, PDF (optional).
+- ✅ **Token-Efficient**: LLMs can focus on content.
+- ✅ **Consistent Quality**: Guaranteed output quality.
+- ✅ **Logo/Banner Integration**: Easy logo management.
+- ✅ **Image Support**: Article images with captions.
+- ✅ **Interactive Quizzes**: Question-answer systems.
+- ✅ **Sudoku Puzzles**: Automatic Sudoku generation.
+- ✅ **Responsive Design**: Mobile-optimized output.
 
-##  ️ Installation
+## ️ Installation
 
 ```python
-# Einfach die Datei herunterladen und importieren
+# Simply download the file and import it
 import newspaper_framework
 ```
 
-##   Design-Prinzipien
+## Design Principles
 
 ### 1. LLM-First
-- Methodennamen wie `add_article()` statt `append_content()`
-- Klare Erfolgs-/Fehlermeldungen mit Emojis
-- Automatische Inhaltsvalidierung und -korrektur
-- Hilfreiche Warnungen statt kryptischer Fehlermeldungen
+- Method names like `add_article()` instead of `append_content()`.
+- Clear success/error messages with emojis.
+- Automatic content validation and correction.
+- Helpful warnings instead of cryptic error messages.
 
-### 2. Fehlertoleranz
-- Kurze Artikel werden automatisch ergänzt
-- Fehlerhafte Eingaben werden sanft korrigiert
-- Fehlende Bilder erzeugen Warnungen, keine Abbrüche
+### 2. Fault Tolerance
+- Short articles are automatically supplemented.
+- Incorrect inputs are gently corrected.
+- Missing images generate warnings, not crashes.
 
-### 3. Medienintegration
-- Einfache Logo-Verwaltung
-- Bildunterstützung für Artikel
-- Interaktive Elemente (Quiz, Sudoku)
+### 3. Media Integration
+- Simple logo management.
+- Image support for articles.
+- Interactive elements (quizzes, Sudoku).
 
-##  📖 Dokumentation für LLMs
+## 📖 Documentation for LLMs
 
-### Wichtige Methoden:
+### Key Methods:
 
 #### `add_article(title, content, **kwargs)`
-Fügt einen Artikel hinzu mit automatischer Validierung.
+Adds an article with automatic validation.
 
 #### `set_logo(logo_path)`
-Setzt ein Logo für die Zeitung.
+Sets a logo for the newspaper.
 
 #### `add_quiz(quiz)`
-Fügt ein interaktives Quiz hinzu.
+Adds an interactive quiz.
 
 #### `add_sudoku(difficulty="medium")`
-Fügt ein Sudoku-Rätsel hinzu.
+Adds a Sudoku puzzle.
 
 #### `export_html(filename)`
-Exportiert als responsive HTML-Datei.
+Exports as a responsive HTML file.
 
 #### `export_json(filename)`
-Exportiert als strukturierte JSON-Datei.
+Exports as a structured JSON file.
 
-### Fehlerbehandlung:
-- `NewspaperFrameworkWarning` für LLM-freundliche Meldungen
-- Automatische Korrekturen bei möglichen Fehlern
-- Kontinuierliche Verarbeitung auch bei Teilfehlern
+### Error Handling:
+- `NewspaperFrameworkWarning` for LLM-friendly messages.
+- Automatic corrections for potential errors.
+- Continuous processing even with partial errors.
 
-##  🎨 Beispiele
+## 🎨 Examples
 
-### Zeitung mit allen Features
+### Newspaper with All Features
 ```python
 from newspaper_framework import NewspaperFrameWork, QuizSystem
 
-paper = NewspaperFrameWork("Vollständige Zeitung")
+paper = NewspaperFrameWork("Complete Newspaper")
 paper.set_logo("logo.png")
 
-# Mehrere Artikel
-paper.add_article("Titel 1", "Inhalt 1...", priority=1, category="Politik")
-paper.add_article("Titel 2", "Inhalt 2...", priority=2, category="Wirtschaft")
+# Multiple articles
+paper.add_article("Title 1", "Content 1...", priority=1, category="Politics")
+paper.add_article("Title 2", "Content 2...", priority=2, category="Business")
 
 # Quiz
-quiz = QuizSystem("Tagesquiz")
-quiz.add_question("Frage?", ["Option 1", "Option 2"], 0)
+quiz = QuizSystem("Daily Quiz")
+quiz.add_question("Question?", ["Option 1", "Option 2"], 0)
 paper.add_quiz(quiz)
 
 # Sudoku
@@ -138,7 +138,7 @@ paper.add_sudoku("hard")
 paper.export_html("complete.html")
 ```
 
-### Angepasstes Layout
+### Custom Layout
 ```python
 from newspaper_framework import NewspaperFrameWork, LayoutConfig
 
@@ -149,43 +149,43 @@ layout = LayoutConfig(
     columns=3
 )
 
-paper = NewspaperFrameWork("Premium Zeitung", layout=layout)
+paper = NewspaperFrameWork("Premium Newspaper", layout=layout)
 ```
 
-##  📄 Dateien
+## 📄 Files
 
-- `newspaper_framework.py` - Haupt-Framework
-- `API_DOKUMENTATION.md` - Detaillierte API-Referenz
-- `README.md` - Diese Übersicht
-- `QWEN.md` - Projektkontext
+- `newspaper_framework.py` - The main framework.
+- `api_server.py` - A RESTful API server for the framework.
+- `MCP_SERVER.py` - An MCP server for AI agent integration.
+- `README.md` - This overview.
 
-##  🔄 Version 2.0 Features
+## 🔄 Version 2.0 Features
 
-- **Neu**: Logo/Banner-Integration
-- **Neu**: Bildunterstützung für Artikel
-- **Neu**: Interaktive Quiz-Systeme
-- **Neu**: Sudoku-Rätsel-Generierung
-- **Neu**: Verbesserte Fehlerbehandlung
-- **Neu**: Responsive Design-Systeme
-- **Neu**: Erweiterte Export-Formate
+- **New**: Logo/banner integration.
+- **New**: Image support for articles.
+- **New**: Interactive quiz systems.
+- **New**: Sudoku puzzle generation.
+- **New**: Improved error handling.
+- **New**: Responsive design systems.
+- **New**: Expanded export formats.
 
-##  🤖 Für LLMs
+## 🤖 For LLMs
 
-Dieses Framework wurde speziell für KI-Systeme entwickelt:
+This framework was specifically developed for AI systems:
 
-1. **Einfache API**: Klare Methodennamen und Parameter
-2. **Automatische Korrektur**: Fokus auf Inhalt statt auf Fehlerbehebung
-3. **Konsistente Qualität**: Garantierte Ausgabequalität
-4. **Token-Effizienz**: Minimale Overhead-Komplexität
-5. **Fehlertoleranz**: Robuste Verarbeitung auch bei unvollständigen Daten
+1. **Simple API**: Clear method names and parameters.
+2. **Automatic Correction**: Focus on content, not error handling.
+3. **Consistent Quality**: Guaranteed output quality.
+4. **Token Efficiency**: Minimal overhead complexity.
+5. **Fault Tolerance**: Robust processing even with incomplete data.
 
-##  📞 Support
+## 📞 Support
 
-Bei Fragen oder Problemen:
-1. Prüfen Sie die API-Dokumentation
-2. Validieren Sie Ihre Eingabedaten
-3. Nutzen Sie die automatische Fehlerkorrektur
+For questions or issues:
+1. Check the API documentation.
+2. Validate your input data.
+3. Utilize the automatic error correction.
 
 ---
 
-*Entwickelt mit ❤️ für KI-gestützte Zeitungsproduktion*
+*Developed with ❤️ for AI-powered newspaper production*
