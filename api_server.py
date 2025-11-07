@@ -1,78 +1,133 @@
 # Newspaper Framework REST API Server
-# Ermöglicht remote Zugriff auf Framework-Funktionalitäten
+# Enables remote access to framework functionalities
 
 """
-REST-API FÜR NEWSPAPER FRAMEWORK
+REST-API FOR NEWSPAPER FRAMEWORK
 
-FUNKTIONALITÄT:
-- HTTP-Endpunkte für alle Framework-Methoden
-- JSON-basierte Kommunikation
-- Wiederverwendung des bestehenden Frameworks
+FUNCTIONALITY:
+- HTTP endpoints for all framework methods
+- JSON-based communication
+- Reuse of the existing framework
 
-VERWENDUNG FÜR DAS LLM:
-1. Server starten: python api_server.py
-2. API-Endpunkte nutzen: POST /api/newspaper
-3. Framework-Funktionen über HTTP aufrufen
+USAGE FOR LLM:
+1. Start the server: python api_server.py
+2. Use API endpoints: POST /api/newspaper
+3. Call framework functions via HTTP
 """
 
 from flask import Flask, request, jsonify
-import json
-from newspaper_framework import NewspaperFrameWork, QuizSystem
+from newspaper_framework import NewspaperFrameWork
 
 app = Flask(__name__)
 
-
 class NewspaperAPI:
-    """
-    REST-API Wrapper für das Newspaper Framework
+    """A RESTful API wrapper for the Newspaper Framework.
 
-VERWENDUNG FÜR DAS LLM:
-- Framework-Funktionen über HTTP verfügbar machen
-- JSON-basierte Request/Response
-- Wiederverwendung des bestehenden Codes
-"""
+    This class provides methods to create and manage newspapers via an API,
+    allowing for remote, HTTP-based interaction with the framework.
+
+    Attributes:
+        newspapers (Dict[str, NewspaperFrameWork]): A dictionary to store
+            and manage newspaper instances, with newspaper IDs as keys.
+    """
 
     def __init__(self):
+        """Initializes the NewspaperAPI."""
         self.newspapers = {}
     
     def create_newspaper(self, title: str) -> Dict:
+        """Creates a new newspaper instance.
+
+        Args:
+            title (str): The title for the new newspaper.
+
+        Returns:
+            Dict: A dictionary containing the ID and title of the new newspaper.
         """
-    Neues Zeitung erstellen über API
-    """
-        self.newspapers = {}
-    
-    def add_article_via_api(self, newspaper_id: str, article_data: Dict) -> Dict:
-        """
+        newspaper_id = f"np_{len(self.newspapers)}"
         paper = NewspaperFrameWork(title)
         self.newspapers[newspaper_id] = paper
         return {"id": newspaper_id, "title": title}
 
+api = NewspaperAPI()
 
 @app.route('/api/newspaper', methods=['POST'])
-    def create_newspaper_endpoint():
-        """
-    API-Endpunkt: Neue Zeitung erstellen
+def create_newspaper_endpoint():
+    """API endpoint to create a new newspaper.
+
+    This endpoint expects a JSON payload with a "title" field.
+
+    Returns:
+        A JSON response with the new newspaper's ID and title, or an
+        error message.
     """
-        pass
+    data = request.get_json()
+    if not data or "title" not in data:
+        return jsonify({"error": "Title is required"}), 400
 
-
-# API-Endpunkte definieren
+    newspaper = api.create_newspaper(data["title"])
+    return jsonify(newspaper), 201
 
 @app.route('/api/newspaper/<newspaper_id>/article', methods=['POST'])
-    def add_article_endpoint(newspaper_id):
-        """
-    POST /api/newspaper
-    {
-        "title": "AI Morgenzeitung"
-    }
+def add_article_endpoint(newspaper_id):
+    """API endpoint to add an article to a newspaper.
 
+    This endpoint expects a JSON payload with article data.
+
+    Args:
+        newspaper_id (str): The ID of the newspaper to add the article to.
+
+    Returns:
+        A JSON response confirming the article was added, or an error message.
+    """
+    if newspaper_id not in api.newspapers:
+        return jsonify({"error": "Newspaper not found"}), 404
+
+    data = request.get_json()
+    if not data or "title" not in data or "content" not in data:
+        return jsonify({"error": "Title and content are required"}), 400
+
+    paper = api.newspapers[newspaper_id]
+    paper.add_article(
+        title=data["title"],
+        content=data["content"],
+        author=data.get("author", "Unknown"),
+        category=data.get("category", "General"),
+        priority=data.get("priority", 1)
+    )
+    return jsonify({"success": True, "message": "Article added."}), 201
+
+@app.route('/api/newspaper/<newspaper_id>/export', methods=['POST'])
+def export_newspaper_endpoint(newspaper_id):
+    """API endpoint to export a newspaper.
+
+    This endpoint expects a JSON payload with an export format ('html' or 'json').
+
+    Args:
+        newspaper_id (str): The ID of the newspaper to export.
+
+    Returns:
+        A JSON response with the filename of the exported newspaper, or an
+        error message.
+    """
+    if newspaper_id not in api.newspapers:
+        return jsonify({"error": "Newspaper not found"}), 404
+
+    data = request.get_json()
+    export_format = data.get("format", "html")
+
+    paper = api.newspapers[newspaper_id]
+    filename = f"{newspaper_id}_newspaper.{export_format}"
+
+    if export_format == "html":
+        paper.export_html(filename)
+    elif export_format == "json":
+        paper.export_json(filename)
+    else:
+        return jsonify({"error": "Unsupported format"}), 400
+
+    return jsonify({"success": True, "filename": filename})
 
 if __name__ == '__main__':
-    print("🚀 Newspaper Framework API Server startet...")
+    print("Starting Newspaper Framework API Server...")
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
-# BEISPIEL FÜR DAS LLM:
-    curl -X POST http://localhost:5000/api/newspaper \
-        -H "Content-Type: application/json" \
-        -d '{"title": "API Test Zeitung"}'
