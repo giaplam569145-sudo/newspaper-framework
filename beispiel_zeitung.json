@@ -1,0 +1,183 @@
+{
+  "title": "AI Morgenzeitung",
+  "date": "06.11.2025",
+  "layout": {
+    "font_family": "Arial",
+    "primary_color": "#2c3e50",
+    "secondary_color": "#3498db",
+    "max_width": 800,
+    "columns": 2,
+    "spacing": 20
+  },
+  "media": {
+    "logo_path": null,
+    "logo_width": 200,
+    "logo_height": 60,
+    "image_quality": 85,
+    "supported_formats": [
+      "png",
+      "jpg",
+      "jpeg",
+      "gif",
+      "svg"
+    ]
+  },
+  "articles": [
+    {
+      "title": "Neues Framework revolutioniert KI-gestützte Zeitungsproduktion",
+      "content": "Das Newspaper Framework ermöglicht es LLMs, hochwertige Zeitungen mit minimalem Aufwand zu erstellen. Mit integrierten Funktionen für Bilder, Quiz und Sudoku wird die Zeitungserstellung zum Kinderspiel.",
+      "author": "KI-Redakteur",
+      "category": "Technologie",
+      "priority": 1,
+      "image_path": null,
+      "image_caption": null
+    },
+    {
+      "title": "Wirtschaft im Wandel: KI-basierte Analysen gewinnen an Bedeutung",
+      "content": "Neue Algorithmen ermöglichen tiefgreifende Wirtschaftsanalysen in Echtzeit. Unternehmen nutzen immer häufiger KI-Systeme für strategische Entscheidungen.",
+      "author": "Wirtschafts-KI",
+      "category": "Wirtschaft",
+      "priority": 2,
+      "image_path": null,
+      "image_caption": null
+    }
+  ],
+  "quizzes": [
+    {
+      "title": "Technologie-Quiz",
+      "questions": [
+        {
+          "question": "Was ist KI?",
+          "options": [
+            "Künstliche Intelligenz",
+            "Küche International",
+            "Kaufmanns-Institut",
+            "Keine Ahnung"
+          ],
+          "correct_index": 0,
+          "category": "Technologie"
+        }
+      ],
+      "total_questions": 1
+    }
+  ],
+  "sudokus": [
+    {
+      "difficulty": "medium",
+      "grid": [
+        [
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          9,
+          0,
+          4
+        ],
+        [
+          4,
+          9,
+          5,
+          3,
+          7,
+          8,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          5,
+          4,
+          9,
+          8,
+          3,
+          0
+        ],
+        [
+          8,
+          3,
+          4,
+          0,
+          0,
+          0,
+          5,
+          6,
+          9
+        ],
+        [
+          0,
+          0,
+          7,
+          6,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          6,
+          0,
+          8,
+          0,
+          1,
+          0,
+          2
+        ],
+        [
+          0,
+          4,
+          9,
+          8,
+          0,
+          0,
+          0,
+          2,
+          5
+        ],
+        [
+          1,
+          7,
+          8,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          9,
+          0,
+          4,
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "statistics": {
+    "total_articles": 2,
+    "total_quizzes": 1,
+    "total_sudokus": 1,
+    "categories": [
+      "Technologie",
+      "Wirtschaft"
+    ],
+    "authors": [
+      "KI-Redakteur",
+      "Wirtschafts-KI"
+    ]
+  }
+}
