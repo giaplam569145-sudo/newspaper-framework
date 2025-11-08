@@ -26,6 +26,7 @@ import os
 from typing import Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
+from pycrossword import generate_crossword
 
 
 class NewspaperFrameworkWarning(Exception):
@@ -301,6 +302,71 @@ class QuizSystem:
         return html
 
 
+@dataclass
+class Crossword:
+    """Represents a crossword puzzle.
+
+    Attributes:
+        grid (List[List[str]]): The crossword grid.
+        clues (Dict[str, List[Tuple[int, str]]]): The clues for the crossword.
+    """
+    grid: List[List[str]]
+    clues: Dict[str, List[Tuple[int, str]]]
+
+
+class CrosswordGenerator:
+    """Generates and formats crossword puzzles.
+
+    Attributes:
+        words (List[str]): A list of words to be included in the crossword.
+        clues (Dict[str, str]): A dictionary of clues for the words.
+    """
+
+    def __init__(self, words: List[str], clues: Dict[str, str]):
+        """Initializes the CrosswordGenerator with words and clues.
+
+        Args:
+            words (List[str]): A list of words for the crossword.
+            clues (Dict[str, str]): A dictionary of clues for the words.
+        """
+        self.words = words
+        self.clues = clues
+
+    def generate(self) -> Crossword:
+        """Generates a new crossword puzzle.
+
+        Returns:
+            Crossword: The generated crossword puzzle.
+        """
+        dimensions, placed_words = generate_crossword(self.words)
+        grid = [['' for _ in range(dimensions[0])] for _ in range(dimensions[1])]
+        clues = {"horizontal": [], "vertical": []}
+        word_starts = {}
+
+        clue_number = 1
+        for word, x, y, is_horizontal in placed_words:
+            if (x, y) not in word_starts:
+                word_starts[(x, y)] = clue_number
+                clue_number += 1
+
+            num = word_starts[(x, y)]
+
+            if is_horizontal:
+                clues["horizontal"].append((num, self.clues[word]))
+                for i, char in enumerate(word):
+                    grid[x][y + i] = char
+            else:
+                clues["vertical"].append((num, self.clues[word]))
+                for i, char in enumerate(word):
+                    grid[x + i][y] = char
+
+        for (x, y), num in word_starts.items():
+            grid[x][y] = f"{grid[x][y]}{num}"
+
+
+        return Crossword(grid=grid, clues=clues)
+
+
 class NewspaperFrameWork:
     """The main class for creating and managing a newspaper.
 
@@ -315,6 +381,7 @@ class NewspaperFrameWork:
         articles (List[Article]): A list of articles in the newspaper.
         quizzes (List[QuizSystem]): A list of quizzes.
         sudokus (List[SudokuGenerator]): A list of Sudoku puzzles.
+        crosswords (List[Crossword]): A list of crossword puzzles.
         date (str): The publication date of the newspaper.
         logo_content (Optional[str]): The HTML content for the logo.
     """
@@ -335,6 +402,7 @@ class NewspaperFrameWork:
         self.articles: List[Article] = []
         self.quizzes: List[QuizSystem] = []
         self.sudokus: List[SudokuGenerator] = []
+        self.crosswords: List[Crossword] = []
         self.date = datetime.datetime.now().strftime("%d.%m.%Y")
         self.logo_content: Optional[str] = None
         
@@ -430,6 +498,19 @@ class NewspaperFrameWork:
         print(f"Sudoku ({difficulty}) added.")
         return sudoku
     
+    def add_crossword(self, crossword: Crossword) -> Crossword:
+        """Adds a crossword puzzle to the newspaper.
+
+        Args:
+            crossword (Crossword): The Crossword object to add.
+
+        Returns:
+            Crossword: The added Crossword object.
+        """
+        self.crosswords.append(crossword)
+        print("Crossword added.")
+        return crossword
+
     def generate(self) -> Dict:
         """Generates a structured dictionary of the entire newspaper.
 
@@ -445,7 +526,7 @@ class NewspaperFrameWork:
         """
         print("Generating newspaper...")
         
-        if len(self.articles) == 0 and len(self.quizzes) == 0 and len(self.sudokus) == 0:
+        if len(self.articles) == 0 and len(self.quizzes) == 0 and len(self.sudokus) == 0 and len(self.crosswords) == 0:
             raise NewspaperFrameworkWarning(
                 "Keine Inhalte vorhanden. Bitte Artikel, Quiz oder Sudoku hinzufügen."
             )
@@ -462,16 +543,18 @@ class NewspaperFrameWork:
             "articles": [asdict(article) for article in self.articles],
             "quizzes": [quiz.generate_quiz() for quiz in self.quizzes],
             "sudokus": [{"difficulty": s.difficulty, "grid": s.grid} for s in self.sudokus],
+            "crosswords": [asdict(crossword) for crossword in self.crosswords],
             "statistics": {
                 "total_articles": len(self.articles),
                 "total_quizzes": len(self.quizzes),
                 "total_sudokus": len(self.sudokus),
+                "total_crosswords": len(self.crosswords),
                 "categories": list(set(a.category for a in self.articles)),
                 "authors": list(set(a.author for a in self.articles))
             }
         }
         
-        total_content = len(self.articles) + len(self.quizzes) + len(self.sudokus)
+        total_content = len(self.articles) + len(self.quizzes) + len(self.sudokus) + len(self.crosswords)
         print(f"Newspaper generated successfully: {total_content} content elements.")
         return newspaper_data
     
@@ -570,6 +653,12 @@ class NewspaperFrameWork:
                     text-align: center;
                     margin: 20px 0;
                 }}
+                .crossword {{
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 5px;
+                }}
                 .footer {{
                     text-align: center;
                     margin-top: 40px;
@@ -611,11 +700,31 @@ class NewspaperFrameWork:
         for sudoku in self.sudokus:
             html_content += f'<div class="sudoku"><h3>Sudoku ({sudoku.difficulty})</h3>{sudoku.to_html()}</div>'
         
+        # Kreuzworträtsel hinzufügen
+        for crossword in data['crosswords']:
+            html_content += '<div class="crossword"><h3>Kreuzworträtsel</h3>'
+            html_content += '<table style="border-collapse: collapse; margin: 20px auto;">'
+            for row in crossword['grid']:
+                html_content += '<tr>'
+                for cell in row:
+                    html_content += f'<td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">{cell if cell else ""}</td>'
+                html_content += '</tr>'
+            html_content += '</table>'
+            html_content += '<h4>Horizontal</h4><ul>'
+            for num, clue in crossword['clues']['horizontal']:
+                html_content += f'<li><strong>{num}:</strong> {clue}</li>'
+            html_content += '</ul>'
+            html_content += '<h4>Vertical</h4><ul>'
+            for num, clue in crossword['clues']['vertical']:
+                html_content += f'<li><strong>{num}:</strong> {clue}</li>'
+            html_content += '</ul></div>'
+
+
         # Footer hinzufügen
         html_content += f"""
             <div class="footer">
                 <p>Generiert mit Newspaper Framework für LLMs</p>
-                <p>Statistik: {data['statistics']['total_articles']} Artikel, {data['statistics']['total_quizzes']} Quiz, {data['statistics']['total_sudokus']} Sudoku</p>
+                <p>Statistik: {data['statistics']['total_articles']} Artikel, {data['statistics']['total_quizzes']} Quiz, {data['statistics']['total_sudokus']} Sudoku, {data['statistics']['total_crosswords']} Kreuzworträtsel</p>
             </div>
         </body>
         </html>
@@ -684,6 +793,15 @@ def create_sample_newspaper():
     paper.add_quiz(quiz)
     
     paper.add_sudoku("medium")
+
+    crossword_generator = CrosswordGenerator(
+        words=["python", "html"],
+        clues={
+            "python": "A popular programming language.",
+            "html": "A markup language for the web.",
+        },
+    )
+    paper.add_crossword(crossword_generator.generate())
     
     paper.export_html("sample_newspaper.html")
     paper.export_json("sample_newspaper.json")
