@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ data.title }}</title>
+    <style>
+        body {
+            font-family: {{ data.layout.font_family }};
+            max-width: {{ data.layout.max_width }}px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            color: {{ data.layout.primary_color }};
+            border-bottom: 3px solid {{ data.layout.secondary_color }};
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        .logo {
+            margin-bottom: 15px;
+            max-width: {{ data.media.logo_width }}px;
+            max-height: {{ data.media.logo_height }}px;
+        }
+        .article {
+            margin-bottom: {{ data.layout.spacing }}px;
+            padding: 20px;
+            border-left: 4px solid {{ data.layout.secondary_color }};
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .article-title {
+            color: {{ data.layout.primary_color }};
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        .meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .article-image {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+        }
+        .quiz, .crossword {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .sudoku {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+        table.sudoku-table {
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        .sudoku-cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        .sudoku-input {
+            width: 100%;
+            border: none;
+            text-align: center;
+        }
+        .bold { font-weight: bold; }
+        .border-top { border-top: 2px solid black; }
+        .border-left { border-left: 2px solid black; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .article { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if data.media.logo_path %}
+        <img src="{{ data.media.logo_path }}" alt="Logo" class="logo">
+        {% endif %}
+        <h1>{{ data.title }}</h1>
+        <p class="date">{{ data.date }}</p>
+    </div>
+
+    <!-- Articles -->
+    {% for article in data.articles %}
+    <div class="article">
+        <h2 class="article-title">{{ article.title }}</h2>
+        <div class="meta">Von {{ article.author }} | {{ article.category }}</div>
+        {% if article.image_path %}
+        <img src="{{ article.image_path }}" alt="{{ article.image_caption }}" class="article-image">
+        {% endif %}
+        <p>{{ article.content }}</p>
+        {% if article.image_caption %}
+        <p><em>{{ article.image_caption }}</em></p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Quizzes -->
+    {% for quiz in data.quizzes %}
+    <div class="quiz">
+        <h3>{{ quiz.title }}</h3>
+        {% set quiz_loop = loop %}
+        {% for q in quiz.questions %}
+        {% set question_loop = loop %}
+        <div class="question" style="margin: 15px 0;">
+            <p><strong>Frage {{ question_loop.index }}:</strong> {{ q.question }}</p>
+            <div class="options">
+                {% for option in q.options %}
+                <label style="display: block; margin: 5px 0;">
+                    <input type="radio" name="q{{ quiz_loop.index }}_{{ question_loop.index }}" value="{{ loop.index0 }}"> {{ option }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <!-- Sudokus -->
+    {% for sudoku in data.sudokus %}
+    <div class="sudoku">
+        <h3>Sudoku ({{ sudoku.difficulty }})</h3>
+        <table class="sudoku-table">
+            {% for row in sudoku.grid %}
+            <tr>
+                {% set row_loop = loop %}
+                {% for cell in row %}
+                {% set border_class = "" %}
+                {% if row_loop.index0 % 3 == 0 and row_loop.index0 != 0 %}{% set border_class = border_class + " border-top" %}{% endif %}
+                {% if loop.index0 % 3 == 0 and loop.index0 != 0 %}{% set border_class = border_class + " border-left" %}{% endif %}
+
+                <td class="sudoku-cell {{ border_class }} {% if cell != 0 %}bold{% endif %}">
+                    {% if cell == 0 %}
+                    <input type="text" maxlength="1" class="sudoku-input">
+                    {% else %}
+                    {{ cell }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+
+    <!-- Crosswords -->
+    {% for crossword in data.crosswords %}
+    <div class="crossword">
+        <h3>Kreuzworträtsel</h3>
+        <table style="border-collapse: collapse; margin: 20px auto;">
+            {% for row in crossword.grid %}
+            <tr>
+                {% for cell in row %}
+                <td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">{{ cell if cell else "" }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        <h4>Horizontal</h4>
+        <ul>
+            {% for num, clue in crossword.clues.horizontal %}
+            <li><strong>{{ num }}:</strong> {{ clue }}</li>
+            {% endfor %}
+        </ul>
+        <h4>Vertikal</h4>
+        <ul>
+            {% for num, clue in crossword.clues.vertical %}
+            <li><strong>{{ num }}:</strong> {{ clue }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+
+    <div class="footer">
+        <p>Generiert mit Newspaper Framework für LLMs</p>
+        <p>Statistik: {{ data.statistics.total_articles }} Artikel, {{ data.statistics.total_quizzes }} Quiz, {{ data.statistics.total_sudokus }} Sudoku, {{ data.statistics.total_crosswords }} Kreuzworträtsel</p>
+    </div>
+</body>
+</html>
