@@ -1,49 +1,19 @@
-# Newspaper Framework MCP Server
-# Ermöglicht Integration in AI-Agents und Entwicklungsumgebungen
-
-"""
-MCP-SERVER FÜR NEWSPAPER FRAMEWORK
-
-FUNKTIONALITÄT:
-- MCP-Protokoll für Framework-Zugriff
-- Standardisierte Schnittstelle für LLMs
-- Wiederverwendung des bestehenden Frameworks
-
-VERWENDUNG FÜR DAS LLM:
-1. Server starten: python MCP_SERVER.py
-2. Framework-Funktionen über MCP verfügbar machen
-"""
-
 import asyncio
-from mcp import MCPServer
+from typing import Dict
 from newspaper_framework import NewspaperFrameWork, QuizSystem
 
+
 class NewspaperMCPServer:
-    """
-    MCP-Server für Newspaper Framework
-
-    VERWENDUNG FÜR DAS LLM:
-    - Framework-Funktionen über MCP verfügbar machen
-    - JSON-RPC basierte Kommunikation
-    - Standardisierte Tool-Aufrufe
-    """
-
     def __init__(self):
-        self.newspapers = {}
+        self.newspapers: Dict = {}
     
     def create_newspaper(self, title: str) -> Dict:
-        """
-        Neues Zeitung erstellen über MCP
-        """
         paper = NewspaperFrameWork(title)
         newspaper_id = f"np_{len(self.newspapers)}"
         self.newspapers[newspaper_id] = paper
         return {"id": newspaper_id, "title": title}
     
-    def add_article_via_mcp(self, newspaper_id: str, article_data: Dict) -> Dict:
-        """
-        Artikel über MCP hinzufügen
-        """
+    def add_article(self, newspaper_id: str, article_data: Dict) -> Dict:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
         
@@ -57,67 +27,30 @@ class NewspaperMCPServer:
         )
         return {"success": True, "article_id": len(paper.articles)}
     
-    def export_newspaper_via_mcp(self, newspaper_id: str, format: str = "html") -> Dict:
-        """
-        Zeitung über MCP exportieren
-        """
+    def export_newspaper(self, newspaper_id: str, fmt: str = "html") -> Dict:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
         
         paper = self.newspapers[newspaper_id]
-        filename = f"{newspaper_id}_zeitung.{format}"
+        filename = f"{newspaper_id}_zeitung.{fmt}"
         
-        if format == "html":
+        if fmt == "html":
             paper.export_html(filename)
-        elif format == "json":
+        elif fmt == "json":
             paper.export_json(filename)
         
         return {"success": True, "filename": filename}
 
-# MCP-Server implementierung
-async def main():
-    """
-    MCP-Server für Framework-Integration
-    """
-    print("🚀 Newspaper Framework MCP Server startet...")
-    
-    # MCP-Server initialisieren
-    server = MCPServer()
-    
-    # Framework-Funktionen als MCP-Tools verfügbar machen
-    mcp_server = NewspaperMCPServer()
-    
-    # Tools registrieren
-    server.add_tool("create_newspaper", mcp_server.create_newspaper)
-    server.add_tool("add_article", mcp_server.add_article_via_mcp)
-    server.add_tool("export_newspaper", mcp_server.export_newspaper_via_mcp)
-    
-    # Server starten
-    await server.run()
+
+def get_tools():
+    mcp = NewspaperMCPServer()
+    return {
+        "create_newspaper": mcp.create_newspaper,
+        "add_article": mcp.add_article,
+        "export_newspaper": mcp.export_newspaper,
+    }
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
-# BEISPIEL FÜR DAS LLM:
-"""
-MCP-TOOL AUFRUFE:
-
-1. Zeitung erstellen:
-   create_newspaper({"title": "AI Morgenzeitung"})
-
-2. Artikel hinzufügen:
-   add_article({
-       "newspaper_id": "np_0",
-       "title": "KI revolutioniert Zeitungswesen",
-       "content": "Das Newspaper Framework...",
-       "author": "KI-Redakteur",
-       "category": "Technologie",
-       "priority": 1
-   })
-
-3. Zeitung exportieren:
-   export_newspaper({
-       "newspaper_id": "np_0",
-       "format": "html"
-   })
-"""
+    print("Newspaper Framework MCP Server bereit.")
+    print("Verfuegbare Tools:", list(get_tools().keys()))

@@ -20,16 +20,22 @@ WICHTIGE HINWEISE FÜR DAS LLM:
 """
 
 import datetime
+import html as html_module
 import json
 import random
 import os
-from typing import Dict, List, Optional, Union, Tuple
+import warnings
+from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
-from abc import ABC, abstractmethod
 
 
-class NewspaperFrameworkWarning(Exception):
-    """Spezielle Warnungsklasse für LLM-freundliche Fehlermeldungen"""
+class NewspaperFrameworkError(Exception):
+    """Fehlerklasse fuer Framework-validierungsfehler"""
+    pass
+
+
+class NewspaperFrameworkWarning(UserWarning):
+    """Warnungsklasse fuer nicht-kritische Hinweise"""
     pass
 
 
@@ -51,7 +57,7 @@ class Article:
         
         # Content validieren
         if not self.content or len(self.content.strip()) < 10:
-            raise NewspaperFrameworkWarning(
+            raise NewspaperFrameworkError(
                 f"Artikelinhalt zu kurz (min. 10 Zeichen). Titel: '{self.title}'"
             )
         
@@ -60,28 +66,24 @@ class Article:
         
         # Bildpfad validieren falls vorhanden
         if self.image_path and not os.path.exists(self.image_path):
-            print(f"Warnung: Bild nicht gefunden: {self.image_path}")
+            warnings.warn(f"Bild nicht gefunden: {self.image_path}", NewspaperFrameworkWarning)
             self.image_path = None
 
 
 @dataclass
 class LayoutConfig:
-    """Layout-Konfiguration für konsistentes Design"""
     font_family: str = "Arial"
     primary_color: str = "#2c3e50"
     secondary_color: str = "#3498db"
     max_width: int = 800
-    columns: int = 2
     spacing: int = 20
 
 
 @dataclass
 class MediaConfig:
-    """Medien-Konfiguration für Bilder und Logo"""
     logo_path: Optional[str] = None
     logo_width: int = 200
     logo_height: int = 60
-    image_quality: int = 85
     supported_formats: List[str] = None
     
     def __post_init__(self):
@@ -100,13 +102,13 @@ class Question:
     def __post_init__(self):
         """Validierung der Frage"""
         if not self.question or len(self.question.strip()) < 5:
-            raise NewspaperFrameworkWarning("Frage zu kurz (min. 5 Zeichen)")
+            raise NewspaperFrameworkError("Frage zu kurz (min. 5 Zeichen)")
         
         if len(self.options) < 2:
-            raise NewspaperFrameworkWarning("Mindestens 2 Antwortoptionen erforderlich")
+            raise NewspaperFrameworkError("Mindestens 2 Antwortoptionen erforderlich")
         
         if not (0 <= self.correct_index < len(self.options)):
-            raise NewspaperFrameworkWarning("Korrekte Antwort außerhalb des gültigen Bereichs")
+            raise NewspaperFrameworkError("Korrekte Antwort ausserhalb des gueltigen Bereichs")
 
 
 class SudokuGenerator:
@@ -156,7 +158,7 @@ class SudokuGenerator:
             r, c = cells[i]
             self.grid[r][c] = 0
         
-        return self.grid
+        return [row[:] for row in self.grid]
     
     def to_html(self) -> str:
         """Sudoku als HTML-Tabelle formatieren"""
@@ -225,17 +227,16 @@ class QuizSystem:
         }
     
     def to_html(self) -> str:
-        """Quiz als HTML formatieren"""
-        html = f'<div class="quiz" style="margin: 20px 0;"><h3>{self.title}</h3>'
+        html = f'<div class="quiz" style="margin: 20px 0;"><h3>{html_module.escape(self.title)}</h3>'
         
         for i, q in enumerate(self.questions, 1):
             html += f'<div class="question" style="margin: 15px 0;">'
-            html += f'<p><strong>Frage {i}:</strong> {q.question}</p>'
+            html += f'<p><strong>Frage {i}:</strong> {html_module.escape(q.question)}</p>'
             html += '<div class="options">'
             
             for j, option in enumerate(q.options):
                 html += f'<label style="display: block; margin: 5px 0;">'
-                html += f'<input type="radio" name="q{i}" value="{j}"> {option}'
+                html += f'<input type="radio" name="q{i}" value="{j}"> {html_module.escape(option)}'
                 html += '</label>'
             
             html += '</div></div>'
@@ -276,7 +277,7 @@ class NewspaperFrameWork:
         
         # Validierung
         if not self.title:
-            raise NewspaperFrameworkWarning("Zeitungstitel darf nicht leer sein")
+            raise NewspaperFrameworkError("Zeitungstitel darf nicht leer sein")
     
     def set_logo(self, logo_path: str) -> bool:
         """
@@ -289,7 +290,7 @@ class NewspaperFrameWork:
             bool: True bei Erfolg, False bei Fehler
         """
         if not os.path.exists(logo_path):
-            print(f"Warnung: Logo-Datei nicht gefunden: {logo_path}")
+            warnings.warn(f"Logo-Datei nicht gefunden: {logo_path}", NewspaperFrameworkWarning)
             return False
         
         self.media.logo_path = logo_path
@@ -319,15 +320,14 @@ class NewspaperFrameWork:
         try:
             article = Article(title=title, content=content, **kwargs)
             self.articles.append(article)
-            print(f"Artikel '{title[:30]}...' erfolgreich hinzugefügt")
+            print(f"Artikel '{title[:30]}...' erfolgreich hinzugefuegt")
             return article
-        except NewspaperFrameworkWarning as e:
+        except NewspaperFrameworkError as e:
             print(f"Warnung: {e}")
-            # Versuche automatische Korrektur
-            corrected_content = content + " (Inhalt automatisch vervollständigt)"
+            corrected_content = content + " (Inhalt automatisch vervollstaendigt)"
             article = Article(title=title, content=corrected_content, **kwargs)
             self.articles.append(article)
-            print(f"Artikel mit automatischer Korrektur hinzugefügt")
+            print(f"Artikel mit automatischer Korrektur hinzugefuegt")
             return article
     
     def add_quiz(self, quiz: QuizSystem) -> QuizSystem:
@@ -361,30 +361,19 @@ class NewspaperFrameWork:
         return sudoku
     
     def generate(self) -> Dict:
-        """
-        Zeitung als strukturiertes Dictionary generieren
-        
-        Returns:
-            Dict: Strukturierte Zeitungsdaten
-        """
-        print("Generiere Zeitung...")
-        
-        # Validierung der Gesamtzeitung
         if len(self.articles) == 0 and len(self.quizzes) == 0 and len(self.sudokus) == 0:
-            raise NewspaperFrameworkWarning(
-                "Keine Inhalte vorhanden. Bitte Artikel, Quiz oder Sudoku hinzufügen."
+            raise NewspaperFrameworkError(
+                "Keine Inhalte vorhanden. Bitte Artikel, Quiz oder Sudoku hinzufuegen."
             )
         
-        # Artikel nach Priorität sortieren
-        self.articles.sort(key=lambda x: x.priority)
+        sorted_articles = sorted(self.articles, key=lambda x: x.priority)
         
-        # Strukturierte Ausgabe erstellen
         newspaper_data = {
             "title": self.title,
             "date": self.date,
             "layout": asdict(self.layout),
             "media": asdict(self.media),
-            "articles": [asdict(article) for article in self.articles],
+            "articles": [asdict(article) for article in sorted_articles],
             "quizzes": [quiz.generate_quiz() for quiz in self.quizzes],
             "sudokus": [{"difficulty": s.difficulty, "grid": s.grid} for s in self.sudokus],
             "statistics": {
@@ -396,69 +385,56 @@ class NewspaperFrameWork:
             }
         }
         
-        total_content = len(self.articles) + len(self.quizzes) + len(self.sudokus)
-        print(f"Zeitung erfolgreich generiert: {total_content} Inhaltselemente")
         return newspaper_data
     
-    def export_html(self, filename: str = "zeitung.html") -> str:
-        """
-        Zeitung als HTML exportieren
-        
-        Args:
-            filename: Dateiname für HTML-Export
-            
-        Returns:
-            str: HTML-Inhalt
-        """
+    THEMES = {
+        "classic": {
+            "primary": "#2c3e50",
+            "secondary": "#3498db",
+            "background": "#ffffff"
+        },
+        "modern": {
+            "primary": "#1a1a1a",
+            "secondary": "#e74c3c",
+            "background": "#f8f9fa"
+        },
+        "minimal": {
+            "primary": "#333333",
+            "secondary": "#95a5a6",
+            "background": "#ffffff"
+        },
+        "premium": {
+            "primary": "#8e44ad",
+            "secondary": "#f39c12",
+            "background": "#fef9e7"
+        }
+    }
+
+    def export_html(self, filename: str = "zeitung.html", theme: str = "classic") -> str:
         data = self.generate()
         
-        # Design-Themes definieren
-        themes = {
-            "classic": {
-                "primary": "#2c3e50",
-                "secondary": "#3498db",
-                "background": "#ffffff"
-            },
-            "modern": {
-                "primary": "#1a1a1a",
-                "secondary": "#e74c3c",
-                "background": "#f8f9fa"
-            },
-            "minimal": {
-                "primary": "#333333",
-                "secondary": "#95a5a6",
-                "background": "#ffffff"
-            },
-            "premium": {
-                "primary": "#8e44ad",
-                "secondary": "#f39c12",
-                "background": "#fef9e7"
-            }
-        }
+        theme_cfg = self.THEMES.get(theme, self.THEMES["classic"])
         
-        theme = themes.get("classic", themes["classic"])
-        
-        # HTML-Header generieren
         html_content = f"""
         <!DOCTYPE html>
         <html lang="de">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{data['title']}</title>
+            <title>{html_module.escape(data['title'])}</title>
             <style>
                 body {{
                     font-family: {data['layout']['font_family']};
                     max-width: {data['layout']['max_width']}px;
                     margin: 0 auto;
                     padding: 20px;
-                    background-color: {theme['background']};
+                    background-color: {theme_cfg['background']};
                     line-height: 1.6;
                 }}
                 .header {{
                     text-align: center;
-                    color: {theme['primary']};
-                    border-bottom: 3px solid {theme['secondary']};
+                    color: {theme_cfg['primary']};
+                    border-bottom: 3px solid {theme_cfg['secondary']};
                     margin-bottom: 30px;
                     padding-bottom: 20px;
                 }}
@@ -468,12 +444,12 @@ class NewspaperFrameWork:
                 .article {{
                     margin-bottom: {data['layout']['spacing']}px;
                     padding: 20px;
-                    border-left: 4px solid {theme['secondary']};
+                    border-left: 4px solid {theme_cfg['secondary']};
                     background-color: white;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }}
                 .article-title {{
-                    color: {theme['primary']};
+                    color: {theme_cfg['primary']};
                     margin-top: 0;
                     font-size: 1.5em;
                 }}
@@ -513,42 +489,52 @@ class NewspaperFrameWork:
         <body>
             <div class="header">
                 {self.logo_content or ''}
-                <h1>{data['title']}</h1>
-                <p class="date">{data['date']}</p>
+                <h1>{html_module.escape(data['title'])}</h1>
+                <p class="date">{html_module.escape(data['date'])}</p>
             </div>
         """
         
-        # Artikel hinzufügen
         for article in data['articles']:
+            safe_title = html_module.escape(article['title'])
+            safe_author = html_module.escape(article['author'])
+            safe_category = html_module.escape(article['category'])
+            safe_content = html_module.escape(article['content'])
+            
+            img_tag = ""
+            if article.get('image_path'):
+                safe_img_path = html_module.escape(article['image_path'])
+                safe_caption = html_module.escape(article.get('image_caption') or '')
+                img_tag = f'<img src="{safe_img_path}" alt="{safe_caption}" class="article-image">'
+            
+            caption_tag = ""
+            if article.get('image_caption'):
+                caption_tag = f'<p><em>{html_module.escape(article["image_caption"])}</em></p>'
+            
             html_content += f"""
             <div class="article">
-                <h2 class="article-title">{article['title']}</h2>
-                <div class="meta">Von {article['author']} | {article['category']}</div>
-                {f'<img src="{article["image_path"]}" alt="{article["image_caption"]}" class="article-image">' if article.get('image_path') else ''}
-                <p>{article['content']}</p>
-                {f'<p><em>{article["image_caption"]}</em></p>' if article.get('image_caption') else ''}
+                <h2 class="article-title">{safe_title}</h2>
+                <div class="meta">Von {safe_author} | {safe_category}</div>
+                {img_tag}
+                <p>{safe_content}</p>
+                {caption_tag}
             </div>
             """
         
-        # Quiz hinzufügen
         for quiz in self.quizzes:
             html_content += f'<div class="quiz">{quiz.to_html()}</div>'
         
-        # Sudoku hinzufügen
         for sudoku in self.sudokus:
-            html_content += f'<div class="sudoku"><h3>Sudoku ({sudoku.difficulty})</h3>{sudoku.to_html()}</div>'
+            html_content += f'<div class="sudoku"><h3>Sudoku ({html_module.escape(sudoku.difficulty)})</h3>{sudoku.to_html()}</div>'
         
-        # Footer hinzufügen
         html_content += f"""
             <div class="footer">
-                <p>Generiert mit Newspaper Framework für LLMs</p>
+                <p>Generiert mit Newspaper Framework fuer LLMs</p>
                 <p>Statistik: {data['statistics']['total_articles']} Artikel, {data['statistics']['total_quizzes']} Quiz, {data['statistics']['total_sudokus']} Sudoku</p>
             </div>
         </body>
         </html>
         """
         
-        # Datei schreiben
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(html_content)
         

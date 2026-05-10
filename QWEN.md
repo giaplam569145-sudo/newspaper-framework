@@ -1,32 +1,30 @@
-# Newspaper Framework - QWEN Projektkontext
+# Newspaper Framework - Projektkontext
 
-**Projekt**: Newspaper Framework für LLMs  
-**Ziel**: Einfache, fehlertolerante Framework für qualitativ hochwertige Morgenzeitungen  
-**Sprache**: Python  
-**Architektur**: Single-File Framework mit fortgeschrittener Fehlerbehandlung
+**Projekt**: Newspaper Framework fuer LLMs
+**Ziel**: Einfaches, fehlertolerantes Framework fuer KI-gestuetzte Zeitungsproduktion
+**Sprache**: Python 3.12+ (stdlib-only Kern)
+**Architektur**: Single-File Framework mit REST-API und MCP-Server
 
-## Sprint 1 - Setup & Grundstruktur
-- ✅ Git Repository initialisiert
--  🔄 Commit-Struktur erstellen
--  🔄 QWEN.md erstellt
+## Aktueller Stand
 
-## Design-Prinzipien
-- **LLM-first**: Dokumentation und APIs für LLMs optimiert
-- **Fehlertolerant**: Automatische Korrekturen mit sinnvollen Warnungen
-- **Ein-File-Philosophie**: Minimaler Setup-Aufwand
-- **Konsistenz**: Garantierte Qualität durch Design-System
-- **Token-Optimiert**: LLMs können sich auf Inhalt konzentrieren
+### Stabil und lauffaehig
+- `newspaper_framework.py` — Kern-Framework (v2.1)
+- `api_server.py` — REST-API (Flask)
+- `examples/demo_newspaper.py` — funktionierende Demo
 
-## TODOs & Fortschritt
-- Framework-Kern (NewspaperFrameWork-Klasse)
-- Layout-Manager mit Responsive Design
-- Content-Manager für Artikelstruktur
-- Export-System (PDF, HTML, Markdown)
-- Error-Resilience-Layer
-- Komplette Dokumentation
+- `MCP_SERVER.py` — MCP-Server (lauffaehig, braucht MCP-SDK fuer Protokoll-Integration)
 
-## Entscheidungsprotokoll
-- **Framework-Name**: `newspaper_framework.py`
-- **Architektur**: Monolithisch mit sauberer Trennung der Verantwortlichkeiten
-- **Error-Handling**: Try-Catch mit intelligenten Fallbacks
-- **Dependencies**: Minimale externe Abhängigkeiten (reportlab, PIL optional)
+### Design-Prinzipien
+- **LLM-first**: API und Doku fuer LLMs optimiert
+- **Fehlertolerant**: Automatische Korrektur mit Warnungen
+- **Sicher**: HTML-Escaping gegen XSS, Validierung aller Eingaben
+- **Stdlib-only Kern**: Keine externen Abhaengigkeiten fuer `newspaper_framework.py`
+
+### Fehlerklassen
+- `NewspaperFrameworkError(Exception)` — harte Validierungsfehler
+- `NewspaperFrameworkWarning(UserWarning)` — nicht-kritische Hinweise
+
+### Konventionen
+- Deutschsprachige Ausgaben und Warnungen
+- Keine Emojis in `print()` (Windows cp1252)
+- `NewspaperFrameWork` — grosses W in "FrameWork" ist intentional
