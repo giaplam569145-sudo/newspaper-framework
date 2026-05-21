@@ -20,28 +20,37 @@ WICHTIGE HINWEISE FÜR DAS LLM:
 """
 
 import datetime
-import html as html_module
 import json
 import random
 import os
-import warnings
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass, asdict
+from abc import ABC, abstractmethod
+from pycrossword import generate_crossword
 
 
-class NewspaperFrameworkError(Exception):
-    """Fehlerklasse fuer Framework-validierungsfehler"""
-    pass
+class NewspaperFrameworkWarning(Exception):
+    """Custom exception for framework-specific warnings.
 
-
-class NewspaperFrameworkWarning(UserWarning):
-    """Warnungsklasse fuer nicht-kritische Hinweise"""
+    This exception is raised for non-critical errors that should be
+    communicated to the LLM in a user-friendly manner.
+    """
     pass
 
 
 @dataclass
 class Article:
-    """Artikel-Dataklasse für strukturierte Inhalte"""
+    """Represents a single article in the newspaper.
+
+    Attributes:
+        title (str): The title of the article.
+        content (str): The main body content of the article.
+        author (str): The author of the article. Defaults to "Unbekannt".
+        category (str): The category of the article. Defaults to "Allgemein".
+        priority (int): The priority of the article (1-5), where 1 is the highest.
+        image_path (Optional[str]): The local path to an optional image.
+        image_caption (Optional[str]): The caption for the image.
+    """
     title: str
     content: str
     author: str = "Unbekannt"
@@ -51,82 +60,120 @@ class Article:
     image_caption: Optional[str] = None
     
     def __post_init__(self):
-        """Automatische Validierung und Korrektur"""
-        # Titel automatisch trimmen
+        """Performs validation and sanitization after initialization."""
         self.title = self.title.strip()
         
-        # Content validieren
         if not self.content or len(self.content.strip()) < 10:
-            raise NewspaperFrameworkError(
-                f"Artikelinhalt zu kurz (min. 10 Zeichen). Titel: '{self.title}'"
+            raise NewspaperFrameworkWarning(
+                f"Article content is too short (min. 10 characters). Title: '{self.title}'"
             )
         
-        # Priority bounds check
         self.priority = max(1, min(5, self.priority))
         
-        # Bildpfad validieren falls vorhanden
         if self.image_path and not os.path.exists(self.image_path):
-            warnings.warn(f"Bild nicht gefunden: {self.image_path}", NewspaperFrameworkWarning)
+            print(f"Warning: Image not found: {self.image_path}")
             self.image_path = None
 
 
 @dataclass
 class LayoutConfig:
+    """Configures the visual layout and design of the newspaper.
+
+    Attributes:
+        font_family (str): The primary font family for the newspaper.
+        primary_color (str): The main color used for headers and accents.
+        secondary_color (str): The secondary color for links and sub-elements.
+        max_width (int): The maximum width of the newspaper content in pixels.
+        columns (int): The number of columns for the main content.
+        spacing (int): The spacing between elements in pixels.
+    """
     font_family: str = "Arial"
     primary_color: str = "#2c3e50"
     secondary_color: str = "#3498db"
     max_width: int = 800
+    columns: int = 2
     spacing: int = 20
 
 
 @dataclass
 class MediaConfig:
+    """Configures media settings, including logos and images.
+
+    Attributes:
+        logo_path (Optional[str]): The path to the newspaper's logo file.
+        logo_width (int): The maximum width of the logo in pixels.
+        logo_height (int): The maximum height of the logo in pixels.
+        image_quality (int): The quality setting for images (1-100).
+        supported_formats (List[str]): A list of supported image file formats.
+    """
     logo_path: Optional[str] = None
     logo_width: int = 200
     logo_height: int = 60
+    image_quality: int = 85
     supported_formats: List[str] = None
     
     def __post_init__(self):
+        """Initializes default supported formats if not provided."""
         if self.supported_formats is None:
             self.supported_formats = ["png", "jpg", "jpeg", "gif", "svg"]
 
 
 @dataclass
 class Question:
-    """Frage für Quiz-System"""
+    """Represents a single question in a quiz.
+
+    Attributes:
+        question (str): The text of the question.
+        options (List[str]): A list of possible answers.
+        correct_index (int): The index of the correct answer in the options list.
+        category (str): The category of the question. Defaults to "Allgemein".
+    """
     question: str
     options: List[str]
     correct_index: int
     category: str = "Allgemein"
     
     def __post_init__(self):
-        """Validierung der Frage"""
+        """Validates the question's integrity after initialization."""
         if not self.question or len(self.question.strip()) < 5:
-            raise NewspaperFrameworkError("Frage zu kurz (min. 5 Zeichen)")
+            raise NewspaperFrameworkWarning("Question is too short (min. 5 characters).")
         
         if len(self.options) < 2:
-            raise NewspaperFrameworkError("Mindestens 2 Antwortoptionen erforderlich")
+            raise NewspaperFrameworkWarning("At least 2 answer options are required.")
         
         if not (0 <= self.correct_index < len(self.options)):
-            raise NewspaperFrameworkError("Korrekte Antwort ausserhalb des gueltigen Bereichs")
+            raise NewspaperFrameworkWarning("Correct answer index is out of bounds.")
 
 
 class SudokuGenerator:
-    """Sudoku-Generator für Zeitungs-Rätsel"""
+    """Generates and formats Sudoku puzzles.
+
+    Attributes:
+        difficulty (str): The difficulty of the puzzle ('easy', 'medium', 'hard').
+        grid (List[List[int]]): The 9x9 Sudoku grid.
+    """
     
     def __init__(self, difficulty: str = "medium"):
-        """
-        Sudoku-Generator initialisieren
-        
+        """Initializes the SudokuGenerator with a specified difficulty.
+
         Args:
-            difficulty: "easy", "medium", "hard"
+            difficulty (str): The difficulty of the puzzle. Can be 'easy',
+                'medium', or 'hard'. Defaults to 'medium'.
         """
         self.difficulty = difficulty
         self.grid = [[0 for _ in range(9)] for _ in range(9)]
     
     def generate(self) -> List[List[int]]:
-        """Sudoku generieren"""
-        # Einfache Sudoku-Implementierung
+        """Generates a new Sudoku grid based on the specified difficulty.
+
+        This method uses a shuffling algorithm to create a valid, complete
+        Sudoku grid and then removes a number of cells based on the
+        difficulty level to create the puzzle.
+
+        Returns:
+            List[List[int]]: The generated 9x9 Sudoku grid with some cells
+                set to 0 to represent empty spaces.
+        """
         base = 3
         side = base * base
         
@@ -141,10 +188,8 @@ class SudokuGenerator:
         cols = [g * base + c for g in shuffle(r_base) for c in shuffle(r_base)]
         nums = shuffle(range(1, base * base + 1))
         
-        # Vollständiges Sudoku erzeugen
         self.grid = [[nums[pattern(r, c)] for c in cols] for r in rows]
         
-        # Zufällige Zellen entfernen basierend auf Schwierigkeit
         cells_to_remove = {
             "easy": 30,
             "medium": 40,
@@ -158,10 +203,14 @@ class SudokuGenerator:
             r, c = cells[i]
             self.grid[r][c] = 0
         
-        return [row[:] for row in self.grid]
+        return self.grid
     
     def to_html(self) -> str:
-        """Sudoku als HTML-Tabelle formatieren"""
+        """Formats the Sudoku grid as an HTML table.
+
+        Returns:
+            str: An HTML string representing the Sudoku puzzle.
+        """
         html = '<table class="sudoku" style="border-collapse: collapse; margin: 20px auto;">'
         
         for i, row in enumerate(self.grid):
@@ -184,41 +233,44 @@ class SudokuGenerator:
 
 
 class QuizSystem:
-    """Quiz-System für interaktive Zeitungsinhalte"""
+    """Manages a collection of questions to create a quiz.
+
+    Attributes:
+        title (str): The title of the quiz.
+        questions (List[Question]): A list of Question objects.
+    """
     
     def __init__(self, title: str = "Tagesquiz"):
-        """
-        Quiz-System initialisieren
-        
+        """Initializes the QuizSystem with a title.
+
         Args:
-            title: Titel des Quiz
+            title (str): The title of the quiz. Defaults to "Tagesquiz".
         """
         self.title = title
         self.questions: List[Question] = []
     
     def add_question(self, question: str, options: List[str], correct_index: int, category: str = "Allgemein") -> Question:
-        """
-        Frage zum Quiz hinzufügen
-        
+        """Adds a new question to the quiz.
+
         Args:
-            question: Die Frage
-            options: Liste der Antwortoptionen
-            correct_index: Index der korrekten Antwort
-            category: Kategorie der Frage
-            
+            question (str): The text of the question.
+            options (List[str]): A list of possible answers.
+            correct_index (int): The index of the correct answer.
+            category (str): The category of the question.
+
         Returns:
-            Question: Erstellte Frage
+            Question: The newly created and added Question object.
         """
         q = Question(question=question, options=options, correct_index=correct_index, category=category)
         self.questions.append(q)
         return q
     
     def generate_quiz(self) -> Dict:
-        """
-        Quiz als Dictionary generieren
-        
+        """Generates a dictionary representation of the quiz.
+
         Returns:
-            Dict: Strukturierte Quiz-Daten
+            Dict: A dictionary containing the quiz title, a list of questions,
+                and the total number of questions.
         """
         return {
             "title": self.title,
@@ -227,16 +279,21 @@ class QuizSystem:
         }
     
     def to_html(self) -> str:
-        html = f'<div class="quiz" style="margin: 20px 0;"><h3>{html_module.escape(self.title)}</h3>'
+        """Formats the quiz as an HTML block.
+
+        Returns:
+            str: An HTML string representing the quiz.
+        """
+        html = f'<div class="quiz" style="margin: 20px 0;"><h3>{self.title}</h3>'
         
         for i, q in enumerate(self.questions, 1):
             html += f'<div class="question" style="margin: 15px 0;">'
-            html += f'<p><strong>Frage {i}:</strong> {html_module.escape(q.question)}</p>'
+            html += f'<p><strong>Frage {i}:</strong> {q.question}</p>'
             html += '<div class="options">'
             
             for j, option in enumerate(q.options):
                 html += f'<label style="display: block; margin: 5px 0;">'
-                html += f'<input type="radio" name="q{i}" value="{j}"> {html_module.escape(option)}'
+                html += f'<input type="radio" name="q{i}" value="{j}"> {option}'
                 html += '</label>'
             
             html += '</div></div>'
@@ -245,26 +302,99 @@ class QuizSystem:
         return html
 
 
-class NewspaperFrameWork:
+@dataclass
+class Crossword:
+    """Represents a crossword puzzle.
+
+    Attributes:
+        grid (List[List[str]]): The crossword grid.
+        clues (Dict[str, List[Tuple[int, str]]]): The clues for the crossword.
     """
-    HAUPT-FRAMEWORK-KLASSE FÜR LLMs
-    
-    VERWENDUNG FÜR DAS LLM:
-    1. Framework erstellen: paper = NewspaperFrameWork()
-    2. Artikel hinzufügen: paper.add_article(...)
-    3. Medien hinzufügen: paper.set_logo(...)
-    4. Quiz/Sudoku hinzufügen: paper.add_quiz(...), paper.add_sudoku(...)
-    5. Exportieren: paper.export_html() oder paper.export_json()
+    grid: List[List[str]]
+    clues: Dict[str, List[Tuple[int, str]]]
+
+
+class CrosswordGenerator:
+    """Generates and formats crossword puzzles.
+
+    Attributes:
+        words (List[str]): A list of words to be included in the crossword.
+        clues (Dict[str, str]): A dictionary of clues for the words.
+    """
+
+    def __init__(self, words: List[str], clues: Dict[str, str]):
+        """Initializes the CrosswordGenerator with words and clues.
+
+        Args:
+            words (List[str]): A list of words for the crossword.
+            clues (Dict[str, str]): A dictionary of clues for the words.
+        """
+        self.words = words
+        self.clues = clues
+
+    def generate(self) -> Crossword:
+        """Generates a new crossword puzzle.
+
+        Returns:
+            Crossword: The generated crossword puzzle.
+        """
+        dimensions, placed_words = generate_crossword(self.words)
+        grid = [['' for _ in range(dimensions[0])] for _ in range(dimensions[1])]
+        clues = {"horizontal": [], "vertical": []}
+        word_starts = {}
+
+        clue_number = 1
+        for word, x, y, is_horizontal in placed_words:
+            if (x, y) not in word_starts:
+                word_starts[(x, y)] = clue_number
+                clue_number += 1
+
+            num = word_starts[(x, y)]
+
+            if is_horizontal:
+                clues["horizontal"].append((num, self.clues[word]))
+                for i, char in enumerate(word):
+                    grid[x][y + i] = char
+            else:
+                clues["vertical"].append((num, self.clues[word]))
+                for i, char in enumerate(word):
+                    grid[x + i][y] = char
+
+        for (x, y), num in word_starts.items():
+            grid[x][y] = f"{grid[x][y]}{num}"
+
+
+        return Crossword(grid=grid, clues=clues)
+
+
+class NewspaperFrameWork:
+    """The main class for creating and managing a newspaper.
+
+    This class provides a high-level API for LLMs to construct a newspaper
+    by adding articles, quizzes, Sudoku puzzles, and other media. It handles
+    validation, layout, and exporting to various formats.
+
+    Attributes:
+        title (str): The title of the newspaper.
+        layout (LayoutConfig): The layout configuration object.
+        media (MediaConfig): The media configuration object.
+        articles (List[Article]): A list of articles in the newspaper.
+        quizzes (List[QuizSystem]): A list of quizzes.
+        sudokus (List[SudokuGenerator]): A list of Sudoku puzzles.
+        crosswords (List[Crossword]): A list of crossword puzzles.
+        date (str): The publication date of the newspaper.
+        logo_content (Optional[str]): The HTML content for the logo.
     """
     
     def __init__(self, title: str = "Morgenzeitung", layout: Optional[LayoutConfig] = None, media: Optional[MediaConfig] = None):
-        """
-        Framework initialisieren
-        
+        """Initializes the NewspaperFrameWork.
+
         Args:
-            title: Titel der Zeitung
-            layout: Layout-Konfiguration
-            media: Medien-Konfiguration
+            title (str): The title of the newspaper.
+            layout (Optional[LayoutConfig]): A custom layout configuration.
+                If None, a default layout is used.
+            media (Optional[MediaConfig]): A custom media configuration.
+                If None, a default configuration is used.
         """
         self.title = title.strip()
         self.layout = layout or LayoutConfig()
@@ -272,169 +402,219 @@ class NewspaperFrameWork:
         self.articles: List[Article] = []
         self.quizzes: List[QuizSystem] = []
         self.sudokus: List[SudokuGenerator] = []
+        self.crosswords: List[Crossword] = []
         self.date = datetime.datetime.now().strftime("%d.%m.%Y")
         self.logo_content: Optional[str] = None
         
         # Validierung
         if not self.title:
-            raise NewspaperFrameworkError("Zeitungstitel darf nicht leer sein")
+            raise NewspaperFrameworkWarning("Newspaper title cannot be empty.")
     
     def set_logo(self, logo_path: str) -> bool:
-        """
-        Logo für die Zeitung setzen
-        
+        """Sets the logo for the newspaper.
+
         Args:
-            logo_path: Pfad zur Logo-Datei
-            
+            logo_path (str): The file path to the logo image.
+
         Returns:
-            bool: True bei Erfolg, False bei Fehler
+            bool: True if the logo was set successfully, False otherwise.
         """
         if not os.path.exists(logo_path):
-            warnings.warn(f"Logo-Datei nicht gefunden: {logo_path}", NewspaperFrameworkWarning)
+            print(f"Warning: Logo file not found: {logo_path}")
             return False
         
         self.media.logo_path = logo_path
         self.logo_content = self._generate_logo_html()
-        print(f"Logo gesetzt: {logo_path}")
+        print(f"Logo set: {logo_path}")
         return True
     
     def _generate_logo_html(self) -> str:
-        """HTML für Logo generieren"""
+        """Generates the HTML for the logo.
+
+        Returns:
+            str: The HTML `<img>` tag for the logo, or an empty string
+                if no logo is set.
+        """
         if not self.media.logo_path:
             return ""
         
         return f'<img src="{self.media.logo_path}" alt="Logo" style="max-width: {self.media.logo_width}px; max-height: {self.media.logo_height}px;">'
     
     def add_article(self, title: str, content: str, **kwargs) -> Article:
-        """
-        Artikel zur Zeitung hinzufügen
-        
+        """Adds an article to the newspaper.
+
+        This method will attempt to automatically correct invalid article
+        content by appending a note to it.
+
         Args:
-            title: Artikel-Titel
-            content: Artikel-Inhalt
-            **kwargs: Zusätzliche Parameter (author, category, priority, image_path, image_caption)
-            
+            title (str): The title of the article.
+            content (str): The main content of the article.
+            **kwargs: Additional keyword arguments for the Article, such as
+                `author`, `category`, `priority`, `image_path`, and
+                `image_caption`.
+
         Returns:
-            Article: Erstellter Artikel
+            Article: The created and added Article object.
         """
         try:
             article = Article(title=title, content=content, **kwargs)
             self.articles.append(article)
-            print(f"Artikel '{title[:30]}...' erfolgreich hinzugefuegt")
+            print(f"Article '{title[:30]}...' added successfully.")
             return article
-        except NewspaperFrameworkError as e:
-            print(f"Warnung: {e}")
-            corrected_content = content + " (Inhalt automatisch vervollstaendigt)"
+        except NewspaperFrameworkWarning as e:
+            print(f"Warning: {e}")
+            corrected_content = content + " (Content automatically completed)"
             article = Article(title=title, content=corrected_content, **kwargs)
             self.articles.append(article)
-            print(f"Artikel mit automatischer Korrektur hinzugefuegt")
+            print(f"Article added with automatic correction.")
             return article
     
     def add_quiz(self, quiz: QuizSystem) -> QuizSystem:
-        """
-        Quiz zur Zeitung hinzufügen
-        
+        """Adds a quiz to the newspaper.
+
         Args:
-            quiz: QuizSystem-Instanz
-            
+            quiz (QuizSystem): The QuizSystem object to add.
+
         Returns:
-            QuizSystem: Hinzugefügtes Quiz
+            QuizSystem: The added QuizSystem object.
         """
         self.quizzes.append(quiz)
-        print(f"Quiz '{quiz.title}' hinzugefügt")
+        print(f"Quiz '{quiz.title}' added.")
         return quiz
     
     def add_sudoku(self, difficulty: str = "medium") -> SudokuGenerator:
-        """
-        Sudoku zur Zeitung hinzufügen
-        
+        """Adds a Sudoku puzzle to the newspaper.
+
         Args:
-            difficulty: Schwierigkeitsgrad ("easy", "medium", "hard")
-            
+            difficulty (str): The difficulty of the Sudoku puzzle. Can be
+                'easy', 'medium', or 'hard'.
+
         Returns:
-            SudokuGenerator: Erstellter Sudoku-Generator
+            SudokuGenerator: The newly created and added SudokuGenerator object.
         """
         sudoku = SudokuGenerator(difficulty)
         sudoku.generate()
         self.sudokus.append(sudoku)
-        print(f"Sudoku ({difficulty}) hinzugefügt")
+        print(f"Sudoku ({difficulty}) added.")
         return sudoku
     
+    def add_crossword(self, crossword: Crossword) -> Crossword:
+        """Adds a crossword puzzle to the newspaper.
+
+        Args:
+            crossword (Crossword): The Crossword object to add.
+
+        Returns:
+            Crossword: The added Crossword object.
+        """
+        self.crosswords.append(crossword)
+        print("Crossword added.")
+        return crossword
+
     def generate(self) -> Dict:
-        if len(self.articles) == 0 and len(self.quizzes) == 0 and len(self.sudokus) == 0:
-            raise NewspaperFrameworkError(
-                "Keine Inhalte vorhanden. Bitte Artikel, Quiz oder Sudoku hinzufuegen."
+        """Generates a structured dictionary of the entire newspaper.
+
+        This method validates the newspaper content, sorts articles by
+        priority, and compiles all data into a single dictionary.
+
+        Returns:
+            Dict: A dictionary containing all newspaper data.
+
+        Raises:
+            NewspaperFrameworkWarning: If no content has been added to the
+                newspaper.
+        """
+        print("Generating newspaper...")
+        
+        if len(self.articles) == 0 and len(self.quizzes) == 0 and len(self.sudokus) == 0 and len(self.crosswords) == 0:
+            raise NewspaperFrameworkWarning(
+                "Keine Inhalte vorhanden. Bitte Artikel, Quiz oder Sudoku hinzufügen."
             )
         
-        sorted_articles = sorted(self.articles, key=lambda x: x.priority)
+        # Artikel nach Priorität sortieren
+        self.articles.sort(key=lambda x: x.priority)
         
+        # Strukturierte Ausgabe erstellen
         newspaper_data = {
             "title": self.title,
             "date": self.date,
             "layout": asdict(self.layout),
             "media": asdict(self.media),
-            "articles": [asdict(article) for article in sorted_articles],
+            "articles": [asdict(article) for article in self.articles],
             "quizzes": [quiz.generate_quiz() for quiz in self.quizzes],
             "sudokus": [{"difficulty": s.difficulty, "grid": s.grid} for s in self.sudokus],
+            "crosswords": [asdict(crossword) for crossword in self.crosswords],
             "statistics": {
                 "total_articles": len(self.articles),
                 "total_quizzes": len(self.quizzes),
                 "total_sudokus": len(self.sudokus),
+                "total_crosswords": len(self.crosswords),
                 "categories": list(set(a.category for a in self.articles)),
                 "authors": list(set(a.author for a in self.articles))
             }
         }
         
+        total_content = len(self.articles) + len(self.quizzes) + len(self.sudokus) + len(self.crosswords)
+        print(f"Newspaper generated successfully: {total_content} content elements.")
         return newspaper_data
     
-    THEMES = {
-        "classic": {
-            "primary": "#2c3e50",
-            "secondary": "#3498db",
-            "background": "#ffffff"
-        },
-        "modern": {
-            "primary": "#1a1a1a",
-            "secondary": "#e74c3c",
-            "background": "#f8f9fa"
-        },
-        "minimal": {
-            "primary": "#333333",
-            "secondary": "#95a5a6",
-            "background": "#ffffff"
-        },
-        "premium": {
-            "primary": "#8e44ad",
-            "secondary": "#f39c12",
-            "background": "#fef9e7"
-        }
-    }
+    def export_html(self, filename: str = "zeitung.html") -> str:
+        """Exports the newspaper as an HTML file.
 
-    def export_html(self, filename: str = "zeitung.html", theme: str = "classic") -> str:
+        Args:
+            filename (str): The name of the output HTML file.
+
+        Returns:
+            str: The generated HTML content as a string.
+        """
         data = self.generate()
         
-        theme_cfg = self.THEMES.get(theme, self.THEMES["classic"])
+        themes = {
+            "classic": {
+                "primary": "#2c3e50",
+                "secondary": "#3498db",
+                "background": "#ffffff"
+            },
+            "modern": {
+                "primary": "#1a1a1a",
+                "secondary": "#e74c3c",
+                "background": "#f8f9fa"
+            },
+            "minimal": {
+                "primary": "#333333",
+                "secondary": "#95a5a6",
+                "background": "#ffffff"
+            },
+            "premium": {
+                "primary": "#8e44ad",
+                "secondary": "#f39c12",
+                "background": "#fef9e7"
+            }
+        }
         
+        theme = themes.get("classic", themes["classic"])
+        
+        # HTML-Header generieren
         html_content = f"""
         <!DOCTYPE html>
         <html lang="de">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{html_module.escape(data['title'])}</title>
+            <title>{data['title']}</title>
             <style>
                 body {{
                     font-family: {data['layout']['font_family']};
                     max-width: {data['layout']['max_width']}px;
                     margin: 0 auto;
                     padding: 20px;
-                    background-color: {theme_cfg['background']};
+                    background-color: {theme['background']};
                     line-height: 1.6;
                 }}
                 .header {{
                     text-align: center;
-                    color: {theme_cfg['primary']};
-                    border-bottom: 3px solid {theme_cfg['secondary']};
+                    color: {theme['primary']};
+                    border-bottom: 3px solid {theme['secondary']};
                     margin-bottom: 30px;
                     padding-bottom: 20px;
                 }}
@@ -444,12 +624,12 @@ class NewspaperFrameWork:
                 .article {{
                     margin-bottom: {data['layout']['spacing']}px;
                     padding: 20px;
-                    border-left: 4px solid {theme_cfg['secondary']};
+                    border-left: 4px solid {theme['secondary']};
                     background-color: white;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }}
                 .article-title {{
-                    color: {theme_cfg['primary']};
+                    color: {theme['primary']};
                     margin-top: 0;
                     font-size: 1.5em;
                 }}
@@ -473,6 +653,12 @@ class NewspaperFrameWork:
                     text-align: center;
                     margin: 20px 0;
                 }}
+                .crossword {{
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 5px;
+                }}
                 .footer {{
                     text-align: center;
                     margin-top: 40px;
@@ -489,125 +675,142 @@ class NewspaperFrameWork:
         <body>
             <div class="header">
                 {self.logo_content or ''}
-                <h1>{html_module.escape(data['title'])}</h1>
-                <p class="date">{html_module.escape(data['date'])}</p>
+                <h1>{data['title']}</h1>
+                <p class="date">{data['date']}</p>
             </div>
         """
         
+        # Artikel hinzufügen
         for article in data['articles']:
-            safe_title = html_module.escape(article['title'])
-            safe_author = html_module.escape(article['author'])
-            safe_category = html_module.escape(article['category'])
-            safe_content = html_module.escape(article['content'])
-            
-            img_tag = ""
-            if article.get('image_path'):
-                safe_img_path = html_module.escape(article['image_path'])
-                safe_caption = html_module.escape(article.get('image_caption') or '')
-                img_tag = f'<img src="{safe_img_path}" alt="{safe_caption}" class="article-image">'
-            
-            caption_tag = ""
-            if article.get('image_caption'):
-                caption_tag = f'<p><em>{html_module.escape(article["image_caption"])}</em></p>'
-            
             html_content += f"""
             <div class="article">
-                <h2 class="article-title">{safe_title}</h2>
-                <div class="meta">Von {safe_author} | {safe_category}</div>
-                {img_tag}
-                <p>{safe_content}</p>
-                {caption_tag}
+                <h2 class="article-title">{article['title']}</h2>
+                <div class="meta">Von {article['author']} | {article['category']}</div>
+                {f'<img src="{article["image_path"]}" alt="{article["image_caption"]}" class="article-image">' if article.get('image_path') else ''}
+                <p>{article['content']}</p>
+                {f'<p><em>{article["image_caption"]}</em></p>' if article.get('image_caption') else ''}
             </div>
             """
         
+        # Quiz hinzufügen
         for quiz in self.quizzes:
             html_content += f'<div class="quiz">{quiz.to_html()}</div>'
         
+        # Sudoku hinzufügen
         for sudoku in self.sudokus:
-            html_content += f'<div class="sudoku"><h3>Sudoku ({html_module.escape(sudoku.difficulty)})</h3>{sudoku.to_html()}</div>'
+            html_content += f'<div class="sudoku"><h3>Sudoku ({sudoku.difficulty})</h3>{sudoku.to_html()}</div>'
         
+        # Kreuzworträtsel hinzufügen
+        for crossword in data['crosswords']:
+            html_content += '<div class="crossword"><h3>Kreuzworträtsel</h3>'
+            html_content += '<table style="border-collapse: collapse; margin: 20px auto;">'
+            for row in crossword['grid']:
+                html_content += '<tr>'
+                for cell in row:
+                    html_content += f'<td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">{cell if cell else ""}</td>'
+                html_content += '</tr>'
+            html_content += '</table>'
+            html_content += '<h4>Horizontal</h4><ul>'
+            for num, clue in crossword['clues']['horizontal']:
+                html_content += f'<li><strong>{num}:</strong> {clue}</li>'
+            html_content += '</ul>'
+            html_content += '<h4>Vertical</h4><ul>'
+            for num, clue in crossword['clues']['vertical']:
+                html_content += f'<li><strong>{num}:</strong> {clue}</li>'
+            html_content += '</ul></div>'
+
+
+        # Footer hinzufügen
         html_content += f"""
             <div class="footer">
-                <p>Generiert mit Newspaper Framework fuer LLMs</p>
-                <p>Statistik: {data['statistics']['total_articles']} Artikel, {data['statistics']['total_quizzes']} Quiz, {data['statistics']['total_sudokus']} Sudoku</p>
+                <p>Generiert mit Newspaper Framework für LLMs</p>
+                <p>Statistik: {data['statistics']['total_articles']} Artikel, {data['statistics']['total_quizzes']} Quiz, {data['statistics']['total_sudokus']} Sudoku, {data['statistics']['total_crosswords']} Kreuzworträtsel</p>
             </div>
         </body>
         </html>
         """
         
+        # Datei schreiben
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        print(f"HTML exportiert: {filename}")
+        print(f"HTML exported: {filename}")
         return html_content
     
     def export_json(self, filename: str = "zeitung.json") -> str:
-        """
-        Zeitung als JSON exportieren
-        
+        """Exports the newspaper as a JSON file.
+
         Args:
-            filename: Dateiname für JSON-Export
-            
+            filename (str): The name of the output JSON file.
+
         Returns:
-            str: JSON-String
+            str: The generated JSON content as a string.
         """
         data = self.generate()
         
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         
-        print(f"JSON exportiert: {filename}")
+        print(f"JSON exported: {filename}")
         return json.dumps(data, indent=2, ensure_ascii=False)
 
 
-# BEISPIEL-FUNKTIONEN FÜR DAS LLM
 def create_sample_newspaper():
+    """Creates a sample newspaper to demonstrate the framework's usage.
+
+    This function serves as a simple, LLM-friendly example of how to use
+    the NewspaperFrameWork to create a newspaper with articles, a quiz,
+    and a Sudoku puzzle.
+
+    Returns:
+        NewspaperFrameWork: The generated NewspaperFrameWork object.
     """
-    BEISPIEL FÜR DAS LLM: So kann das Framework verwendet werden
-    """
-    # Framework erstellen
-    paper = NewspaperFrameWork("AI Morgenzeitung")
+    paper = NewspaperFrameWork("AI Morning News")
     
-    # Artikel hinzufügen
     paper.add_article(
-        title="Neues Framework revolutioniert KI-gestützte Zeitungsproduktion",
-        content="Das Newspaper Framework ermöglicht es LLMs, hochwertige Zeitungen mit minimalem Aufwand zu erstellen. Mit integrierten Funktionen für Bilder, Quiz und Sudoku wird die Zeitungserstellung zum Kinderspiel.",
-        author="KI-Redakteur",
-        category="Technologie",
+        title="New Framework Revolutionizes AI-Powered Newspaper Production",
+        content="The Newspaper Framework allows LLMs to create high-quality newspapers with minimal effort. With integrated features for images, quizzes, and Sudoku, newspaper creation becomes a breeze.",
+        author="AI Editor",
+        category="Technology",
         priority=1
     )
     
     paper.add_article(
-        title="Wirtschaft im Wandel: KI-basierte Analysen gewinnen an Bedeutung",
-        content="Neue Algorithmen ermöglichen tiefgreifende Wirtschaftsanalysen in Echtzeit. Unternehmen nutzen immer häufiger KI-Systeme für strategische Entscheidungen.",
-        author="Wirtschafts-KI",
-        category="Wirtschaft",
+        title="Economy in Transition: AI-Based Analyses Gain Importance",
+        content="New algorithms enable in-depth economic analyses in real-time. Companies are increasingly using AI systems for strategic decisions.",
+        author="Economics AI",
+        category="Business",
         priority=2
     )
     
-    # Quiz hinzufügen
-    quiz = QuizSystem("Technologie-Quiz")
+    quiz = QuizSystem("Technology Quiz")
     quiz.add_question(
-        "Was ist KI?",
-        ["Künstliche Intelligenz", "Küche International", "Kaufmanns-Institut", "Keine Ahnung"],
+        "What is AI?",
+        ["Artificial Intelligence", "Kitchen International", "Merchant Institute", "No Idea"],
         0,
-        "Technologie"
+        "Technology"
     )
     paper.add_quiz(quiz)
     
-    # Sudoku hinzufügen
     paper.add_sudoku("medium")
+
+    crossword_generator = CrosswordGenerator(
+        words=["python", "html"],
+        clues={
+            "python": "A popular programming language.",
+            "html": "A markup language for the web.",
+        },
+    )
+    paper.add_crossword(crossword_generator.generate())
     
-    # Exportieren
-    paper.export_html("beispiel_zeitung.html")
-    paper.export_json("beispiel_zeitung.json")
+    paper.export_html("sample_newspaper.html")
+    paper.export_json("sample_newspaper.json")
     
     return paper
 
 
 if __name__ == "__main__":
-    # Automatische Demo beim direkten Ausführen
-    print("Newspaper Framework Demo wird gestartet...")
+    print("Starting Newspaper Framework Demo...")
     create_sample_newspaper()
-    print("Demo erfolgreich abgeschlossen!")
-    print("Dateien erstellt: beispiel_zeitung.html, beispiel_zeitung.json")
+    print("Demo successfully completed!")
+    print("Files created: sample_newspaper.html, sample_newspaper.json")
