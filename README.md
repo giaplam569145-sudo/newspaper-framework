@@ -1,34 +1,25 @@
 # Newspaper Framework for LLMs
 
-A simple, fault-tolerant framework for AI-powered newspaper production with advanced media features.
-
-## Goal
-
-To enable LLMs to create high-quality morning newspapers with minimal effort, while the framework ensures consistent quality and automatic error correction.
+A modular, fault-tolerant framework for AI-powered newspaper production with quizzes, sudoku, crosswords, and multiple export formats.
 
 ## Quick Start
 
 ```python
-from newspaper_framework import NewspaperFrameWork, QuizSystem
+from src.newspaper import Newspaper, QuizSystem
+from src.newspaper.content.crossword import CrosswordGenerator
 
-# Create the framework
-paper = NewspaperFrameWork("AI Morning News")
+paper = Newspaper("AI Morning News")
 
-# Add an article (the LLM replaces this with its own content)
 paper.add_article(
-    title="AI Revolutionizes the Newspaper Industry",
-    content="New framework facilitates AI-powered newspaper production...",
+    title="AI Revolutionizes Newspaper Production",
+    content="The Newspaper Framework allows LLMs to create high-quality newspapers with minimal effort...",
     author="AI Editor",
     category="Technology",
-    priority=1,
-    image_path="tech_image.jpg",
-    image_caption="AI in media production"
+    priority=1
 )
 
-# Set the logo
 paper.set_logo("logo.png")
 
-# Add a quiz
 quiz = QuizSystem("Technology Quiz")
 quiz.add_question(
     "What is AI?",
@@ -38,154 +29,86 @@ quiz.add_question(
 )
 paper.add_quiz(quiz)
 
-# Add a Sudoku puzzle
 paper.add_sudoku("medium")
 
-# Export
+crossword = CrosswordGenerator(
+    words=["python", "html"],
+    clues={"python": "A popular programming language.", "html": "A markup language for the web."},
+)
+paper.add_crossword(crossword.generate())
+
 paper.export_html("my_newspaper.html")
 paper.export_json("my_newspaper.json")
 ```
 
-## 📋 Features
+## Features
 
-- ✅ **LLM-Friendly API**: Intuitive method names and clear feedback.
-- ✅ **Automatic Validation**: Content is automatically checked and corrected.
-- ✅ **Design System**: Consistent layouts without design overhead.
-- ✅ **Fault-Tolerant**: Gentle corrections instead of hard errors.
-- ✅ **Single-File Solution**: Easy distribution via chat messages.
-- ✅ **Responsive Export**: HTML, JSON, PDF (optional).
-- ✅ **Token-Efficient**: LLMs can focus on content.
-- ✅ **Consistent Quality**: Guaranteed output quality.
-- ✅ **Logo/Banner Integration**: Easy logo management.
-- ✅ **Image Support**: Article images with captions.
-- ✅ **Interactive Quizzes**: Question-answer systems.
-- ✅ **Sudoku Puzzles**: Automatic Sudoku generation.
-- ✅ **Responsive Design**: Mobile-optimized output.
+- **LLM-Friendly API**: Intuitive method names and clear feedback
+- **Automatic Validation**: Content checked and corrected automatically
+- **Fault-Tolerant**: Gentle corrections, warnings via `warnings.warn()`
+- **Modular Architecture**: Clean `src/` package layout with DRY/SOLID principles
+- **Content Types**: Articles, quizzes, sudoku, crossword puzzles
+- **Export Formats**: HTML (Jinja2 templates with autoescape), JSON
+- **Responsive Design**: Mobile-optimized HTML output
+- **REST API**: Flask-based HTTP API (`src/api/rest.py`)
 
-## ️ Installation
+## Installation
 
-```python
-# Simply download the file and import it
-import newspaper_framework
+```bash
+pip install -r requirements.txt
 ```
 
-## Design Principles
+Core framework only needs `jinja2`. Full features need `flask`, `pycrossword-generator`, `mcp`.
 
-### 1. LLM-First
-- Method names like `add_article()` instead of `append_content()`.
-- Clear success/error messages with emojis.
-- Automatic content validation and correction.
-- Helpful warnings instead of cryptic error messages.
+## Project Structure
 
-### 2. Fault Tolerance
-- Short articles are automatically supplemented.
-- Incorrect inputs are gently corrected.
-- Missing images generate warnings, not crashes.
-
-### 3. Media Integration
-- Simple logo management.
-- Image support for articles.
-- Interactive elements (quizzes, Sudoku).
-
-## 📖 Documentation for LLMs
-
-### Key Methods:
-
-#### `add_article(title, content, **kwargs)`
-Adds an article with automatic validation.
-
-#### `set_logo(logo_path)`
-Sets a logo for the newspaper.
-
-#### `add_quiz(quiz)`
-Adds an interactive quiz.
-
-#### `add_sudoku(difficulty="medium")`
-Adds a Sudoku puzzle.
-
-#### `export_html(filename)`
-Exports as a responsive HTML file.
-
-#### `export_json(filename)`
-Exports as a structured JSON file.
-
-### Error Handling:
-- `NewspaperFrameworkWarning` for LLM-friendly messages.
-- Automatic corrections for potential errors.
-- Continuous processing even with partial errors.
-
-## 🎨 Examples
-
-### Newspaper with All Features
-```python
-from newspaper_framework import NewspaperFrameWork, QuizSystem
-
-paper = NewspaperFrameWork("Complete Newspaper")
-paper.set_logo("logo.png")
-
-# Multiple articles
-paper.add_article("Title 1", "Content 1...", priority=1, category="Politics")
-paper.add_article("Title 2", "Content 2...", priority=2, category="Business")
-
-# Quiz
-quiz = QuizSystem("Daily Quiz")
-quiz.add_question("Question?", ["Option 1", "Option 2"], 0)
-paper.add_quiz(quiz)
-
-# Sudoku
-paper.add_sudoku("hard")
-
-paper.export_html("complete.html")
+```
+src/newspaper/          Core package
+  core.py               Newspaper class (main entry point)
+  models.py             Article, Question, LayoutConfig, MediaConfig
+  exceptions.py         NewspaperFrameworkError + NewspaperFrameworkWarning
+  content/              Quiz, Sudoku, Crossword generators
+  export/               HTML (Jinja2) and JSON exporters
+src/api/                REST API and MCP server
+tests/                  pytest test suite (48 tests)
+run_api.py              Start the REST API server
+run_mcp.py              Start the MCP server
+sample_generator.py     Demo script
 ```
 
-### Custom Layout
-```python
-from newspaper_framework import NewspaperFrameWork, LayoutConfig
+## Running
 
-layout = LayoutConfig(
-    font_family="Times New Roman",
-    primary_color="#1a1a1a",
-    max_width=1000,
-    columns=3
-)
+```bash
+# Generate a sample newspaper
+python sample_generator.py
 
-paper = NewspaperFrameWork("Premium Newspaper", layout=layout)
+# Start REST API
+python run_api.py
+
+# Run tests
+python -m pytest tests/ -v
 ```
 
-## 📄 Files
+## API Overview
 
-- `newspaper_framework.py` - The main framework.
-- `api_server.py` - A RESTful API server for the framework.
-- `MCP_SERVER.py` - An MCP server for AI agent integration.
-- `README.md` - This overview.
+### Newspaper Methods
 
-## 🔄 Version 2.0 Features
+| Method | Description |
+|--------|-------------|
+| `add_article(title, content, **kwargs)` | Add an article (min 10 chars content) |
+| `set_logo(logo_path)` | Set newspaper logo |
+| `add_quiz(quiz)` | Add a QuizSystem |
+| `add_sudoku(difficulty)` | Add sudoku ("easy", "medium", "hard") |
+| `add_crossword(crossword)` | Add a crossword puzzle |
+| `generate()` | Return structured dict of the newspaper |
+| `export_html(filename)` | Export as responsive HTML |
+| `export_json(filename)` | Export as structured JSON |
 
-- **New**: Logo/banner integration.
-- **New**: Image support for articles.
-- **New**: Interactive quiz systems.
-- **New**: Sudoku puzzle generation.
-- **New**: Improved error handling.
-- **New**: Responsive design systems.
-- **New**: Expanded export formats.
+### Error Handling
 
-## 🤖 For LLMs
+- `NewspaperFrameworkError` — hard validation errors (empty title, short content, invalid quiz options)
+- `NewspaperFrameworkWarning` — non-critical warnings (missing images, missing logo)
 
-This framework was specifically developed for AI systems:
+## License
 
-1. **Simple API**: Clear method names and parameters.
-2. **Automatic Correction**: Focus on content, not error handling.
-3. **Consistent Quality**: Guaranteed output quality.
-4. **Token Efficiency**: Minimal overhead complexity.
-5. **Fault Tolerance**: Robust processing even with incomplete data.
-
-## 📞 Support
-
-For questions or issues:
-1. Check the API documentation.
-2. Validate your input data.
-3. Utilize the automatic error correction.
-
----
-
-*Developed with ❤️ for AI-powered newspaper production*
+Local project. No license file yet.
