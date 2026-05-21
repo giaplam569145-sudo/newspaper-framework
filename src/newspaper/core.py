@@ -88,7 +88,7 @@ class Newspaper:
             self.articles.append(article)
             print(f"Article '{title[:30]}...' added successfully.")
             return article
-        except NewspaperFrameworkWarning as e:
+        except NewspaperFrameworkError as e:
             print(f"Warning: {e}")
             corrected_content = content + " (Content automatically completed)"
             article = Article(title=title, content=corrected_content, **kwargs)

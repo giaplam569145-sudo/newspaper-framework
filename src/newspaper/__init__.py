@@ -10,7 +10,7 @@ from .models import Article, LayoutConfig, MediaConfig, Question
 from .content.quiz import QuizSystem
 from .content.sudoku import SudokuGenerator
 from .content.crossword import CrosswordGenerator, Crossword
-from .exceptions import NewspaperFrameworkWarning
+from .exceptions import NewspaperFrameworkError, NewspaperFrameworkWarning
 
 __all__ = [
     "Newspaper",
@@ -22,5 +22,6 @@ __all__ = [
     "SudokuGenerator",
     "CrosswordGenerator",
     "Crossword",
+    "NewspaperFrameworkError",
     "NewspaperFrameworkWarning",
 ]
