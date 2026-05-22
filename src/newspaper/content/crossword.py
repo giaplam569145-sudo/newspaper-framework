@@ -1,8 +1,8 @@
 """Crossword generator implementation."""
 
-from typing import List, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 from dataclasses import dataclass, asdict
-from pycrossword import generate_crossword
+from ..exceptions import NewspaperFrameworkError
 from .base import ContentGenerator
 
 @dataclass
@@ -26,29 +26,24 @@ class CrosswordGenerator(ContentGenerator):
     """
 
     def __init__(self, words: List[str], clues: Dict[str, str]):
-        """Initializes the CrosswordGenerator with words and clues.
-
-        Args:
-            words (List[str]): A list of words for the crossword.
-            clues (Dict[str, str]): A dictionary of clues for the words.
-        """
         self.words = words
         self.clues = clues
         self.generated_crossword = None
 
     def generate(self) -> Crossword:
-        """Generates a new crossword puzzle.
+        try:
+            from pycrossword import generate_crossword
+        except ImportError:
+            raise NewspaperFrameworkError(
+                "pycrossword-generator is required for crossword generation. "
+                "Install with: pip install pycrossword-generator"
+            )
 
-        Returns:
-            Crossword: The generated crossword puzzle.
-        """
-        # pycrossword-generator returns dimensions and placed words
         dimensions, placed_words = generate_crossword(self.words)
 
-        # grid init with empty strings
         grid = [['' for _ in range(dimensions[0])] for _ in range(dimensions[1])]
-        clues = {"horizontal": [], "vertical": []}
-        word_starts = {}
+        clues: Dict[str, List[Tuple[int, str]]] = {"horizontal": [], "vertical": []}
+        word_starts: Dict[tuple, int] = {}
 
         clue_number = 1
         for word, x, y, is_horizontal in placed_words:
@@ -70,13 +65,13 @@ class CrosswordGenerator(ContentGenerator):
                         grid[x + i][y] = char
 
         for (x, y), num in word_starts.items():
-             if x < len(grid) and y < len(grid[0]):
+            if x < len(grid) and y < len(grid[0]):
                 grid[x][y] = f"{grid[x][y]}{num}"
 
         self.generated_crossword = Crossword(grid=grid, clues=clues)
         return self.generated_crossword
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         if not self.generated_crossword:
-             return {}
+            return {}
         return asdict(self.generated_crossword)

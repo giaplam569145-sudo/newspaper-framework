@@ -11,6 +11,6 @@ class ContentGenerator(ABC):
         """Generates the content."""
         pass
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Returns dictionary representation of the content for JSON export."""
         return {}

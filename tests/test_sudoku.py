@@ -51,3 +51,10 @@ class TestSudokuGenerator:
         d = sg.to_dict()
         assert d["difficulty"] == "hard"
         assert len(d["grid"]) == 9
+        assert len(d["solution"]) == 9
+
+    def test_solution_has_no_blanks(self):
+        sg = SudokuGenerator("easy")
+        sg.generate()
+        for row in sg.solution:
+            assert all(cell != 0 for cell in row)

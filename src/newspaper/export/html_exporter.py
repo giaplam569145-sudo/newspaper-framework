@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Dict
+from typing import Any, Dict
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
 from .base import Exporter
 
@@ -15,19 +15,18 @@ class HtmlExporter(Exporter):
         # We can use PackageLoader if installed as package, or FileSystemLoader for local dev.
         # Trying PackageLoader first.
         try:
-             self.env = Environment(
+            self.env = Environment(
                 loader=PackageLoader("newspaper.export", "templates"),
                 autoescape=select_autoescape()
             )
         except ImportError:
-             # Fallback for when running locally without package install
-             template_dir = os.path.join(os.path.dirname(__file__), "templates")
-             self.env = Environment(
+            template_dir = os.path.join(os.path.dirname(__file__), "templates")
+            self.env = Environment(
                 loader=FileSystemLoader(template_dir),
                 autoescape=select_autoescape()
             )
 
-    def export(self, data: Dict, filename: str) -> str:
+    def export(self, data: Dict[str, Any], filename: str) -> str:
         """Exports the newspaper data as an HTML file.
 
         Args:

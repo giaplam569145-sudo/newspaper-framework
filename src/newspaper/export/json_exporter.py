@@ -3,14 +3,14 @@
 import json
 import logging
 from .base import Exporter
-from typing import Dict
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
 class JsonExporter(Exporter):
     """Exports newspaper data to JSON."""
 
-    def export(self, data: Dict, filename: str) -> str:
+    def export(self, data: Dict[str, Any], filename: str) -> str:
         """Exports the newspaper data as a JSON file.
 
         Args:

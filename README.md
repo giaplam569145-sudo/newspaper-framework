@@ -1,6 +1,6 @@
 # Newspaper Framework for LLMs
 
-A modular, fault-tolerant framework for AI-powered newspaper production with quizzes, sudoku, crosswords, and multiple export formats.
+A modular, fault-tolerant framework for AI-powered newspaper production with interactive quizzes, sudoku, crosswords, and multiple export formats.
 
 ## Quick Start
 
@@ -44,13 +44,15 @@ paper.export_json("my_newspaper.json")
 ## Features
 
 - **LLM-Friendly API**: Intuitive method names and clear feedback
-- **Automatic Validation**: Content checked and corrected automatically
-- **Fault-Tolerant**: Gentle corrections, warnings via `warnings.warn()`
+- **Interactive HTML**: Quiz evaluation, sudoku validation, and crossword checking via embedded JavaScript
+- **Automatic Validation**: Content checked with clear error messages
+- **Fault-Tolerant**: Gentle corrections via `force=True`, warnings via `warnings.warn()`
 - **Modular Architecture**: Clean `src/` package layout with DRY/SOLID principles
 - **Content Types**: Articles, quizzes, sudoku, crossword puzzles
-- **Export Formats**: HTML (Jinja2 templates with autoescape), JSON
+- **Export Formats**: HTML (Jinja2 templates with autoescape + interactivity), JSON
 - **Responsive Design**: Mobile-optimized HTML output
-- **REST API**: Flask-based HTTP API (`src/api/rest.py`)
+- **REST API**: Flask-based HTTP API with full CRUD + quiz/sudoku/crossword endpoints
+- **Graceful Degradation**: Crossword generator works without `pycrossword-generator` at import time
 
 ## Installation
 
@@ -69,8 +71,9 @@ src/newspaper/          Core package
   exceptions.py         NewspaperFrameworkError + NewspaperFrameworkWarning
   content/              Quiz, Sudoku, Crossword generators
   export/               HTML (Jinja2) and JSON exporters
+  export/templates/     Jinja2 template with interactive JS
 src/api/                REST API and MCP server
-tests/                  pytest test suite (48 tests)
+tests/                  pytest test suite
 run_api.py              Start the REST API server
 run_mcp.py              Start the MCP server
 sample_generator.py     Demo script
@@ -95,14 +98,25 @@ python -m pytest tests/ -v
 
 | Method | Description |
 |--------|-------------|
-| `add_article(title, content, **kwargs)` | Add an article (min 10 chars content) |
+| `add_article(title, content, force=False, **kwargs)` | Add an article (min 10 chars content, or use `force=True`) |
 | `set_logo(logo_path)` | Set newspaper logo |
 | `add_quiz(quiz)` | Add a QuizSystem |
 | `add_sudoku(difficulty)` | Add sudoku ("easy", "medium", "hard") |
 | `add_crossword(crossword)` | Add a crossword puzzle |
 | `generate()` | Return structured dict of the newspaper |
-| `export_html(filename)` | Export as responsive HTML |
+| `export_html(filename)` | Export as interactive responsive HTML |
 | `export_json(filename)` | Export as structured JSON |
+
+### REST API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/newspaper` | POST | Create a new newspaper |
+| `/api/newspaper/<id>/article` | POST | Add an article |
+| `/api/newspaper/<id>/quiz` | POST | Add a quiz |
+| `/api/newspaper/<id>/sudoku` | POST | Add a sudoku |
+| `/api/newspaper/<id>/crossword` | POST | Add a crossword |
+| `/api/newspaper/<id>/export` | POST | Export as HTML or JSON |
 
 ### Error Handling
 
@@ -111,4 +125,4 @@ python -m pytest tests/ -v
 
 ## License
 
-Local project. No license file yet.
+MIT License. See [LICENSE](LICENSE) for details.

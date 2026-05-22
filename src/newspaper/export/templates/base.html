@@ -79,10 +79,37 @@
             width: 100%;
             border: none;
             text-align: center;
+            font-size: 14px;
         }
         .bold { font-weight: bold; }
         .border-top { border-top: 2px solid black; }
         .border-left { border-left: 2px solid black; }
+
+        .btn-check {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 20px;
+            background-color: {{ data.layout.secondary_color }};
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-check:hover { opacity: 0.9; }
+        .correct { background-color: #d4edda !important; }
+        .incorrect { background-color: #f8d7da !important; }
+        .correct-text { color: #155724; font-weight: bold; }
+        .incorrect-text { color: #721c24; font-weight: bold; }
+        .crossword-input {
+            width: 28px;
+            height: 28px;
+            border: none;
+            text-align: center;
+            text-transform: uppercase;
+            font-size: 14px;
+            background: #fff;
+        }
 
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -116,28 +143,31 @@
 
     <!-- Quizzes -->
     {% for quiz in data.quizzes %}
-    <div class="quiz">
+    <div class="quiz" id="quiz-{{ loop.index }}">
         <h3>{{ quiz.title }}</h3>
-        {% set quiz_loop = loop %}
+        {% set quiz_idx = loop.index %}
         {% for q in quiz.questions %}
-        {% set question_loop = loop %}
-        <div class="question" style="margin: 15px 0;">
-            <p><strong>Frage {{ question_loop.index }}:</strong> {{ q.question }}</p>
+        {% set q_idx = loop.index %}
+        <div class="question" style="margin: 15px 0;" data-correct="{{ q.correct_index }}">
+            <p><strong>Frage {{ q_idx }}:</strong> {{ q.question }}</p>
             <div class="options">
                 {% for option in q.options %}
-                <label style="display: block; margin: 5px 0;">
-                    <input type="radio" name="q{{ quiz_loop.index }}_{{ question_loop.index }}" value="{{ loop.index0 }}"> {{ option }}
+                <label style="display: block; margin: 5px 0;" class="quiz-option">
+                    <input type="radio" name="q{{ quiz_idx }}_{{ q_idx }}" value="{{ loop.index0 }}"> {{ option }}
                 </label>
                 {% endfor %}
             </div>
+            <span class="quiz-feedback" style="display:none; margin-left:10px;"></span>
         </div>
         {% endfor %}
+        <button class="btn-check" onclick="checkQuiz({{ quiz_idx }})">Antworten pr&uuml;fen</button>
+        <div class="quiz-result" style="margin-top:10px;"></div>
     </div>
     {% endfor %}
 
     <!-- Sudokus -->
     {% for sudoku in data.sudokus %}
-    <div class="sudoku">
+    <div class="sudoku" id="sudoku-{{ loop.index }}" data-solution='{{ sudoku.solution | tojson }}'>
         <h3>Sudoku ({{ sudoku.difficulty }})</h3>
         <table class="sudoku-table">
             {% for row in sudoku.grid %}
@@ -150,7 +180,7 @@
 
                 <td class="sudoku-cell {{ border_class }} {% if cell != 0 %}bold{% endif %}">
                     {% if cell == 0 %}
-                    <input type="text" maxlength="1" class="sudoku-input">
+                    <input type="text" maxlength="1" class="sudoku-input" data-row="{{ row_loop.index0 }}" data-col="{{ loop.index0 }}">
                     {% else %}
                     {{ cell }}
                     {% endif %}
@@ -159,18 +189,26 @@
             </tr>
             {% endfor %}
         </table>
+        <button class="btn-check" onclick="checkSudoku({{ loop.index }})">Sudoku pr&uuml;fen</button>
+        <div class="sudoku-result" style="margin-top:10px;"></div>
     </div>
     {% endfor %}
 
     <!-- Crosswords -->
     {% for crossword in data.crosswords %}
-    <div class="crossword">
-        <h3>Kreuzworträtsel</h3>
+    <div class="crossword" id="crossword-{{ loop.index }}">
+        <h3>Kreuzwortr&auml;tsel</h3>
         <table style="border-collapse: collapse; margin: 20px auto;">
             {% for row in crossword.grid %}
             <tr>
                 {% for cell in row %}
-                <td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">{{ cell if cell else "" }}</td>
+                <td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">
+                    {% if cell and cell|length == 1 and cell != ' ' %}
+                    <input type="text" maxlength="1" class="crossword-input" data-answer="{{ cell }}" value="">
+                    {% elif cell %}
+                    <span style="font-size:11px; position:relative;">{{ cell }}</span>
+                    {% endif %}
+                </td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -187,12 +225,124 @@
             <li><strong>{{ num }}:</strong> {{ clue }}</li>
             {% endfor %}
         </ul>
+        <button class="btn-check" onclick="checkCrossword({{ loop.index }})">Kreuzwortr&auml;tsel pr&uuml;fen</button>
+        <div class="crossword-result" style="margin-top:10px;"></div>
     </div>
     {% endfor %}
 
     <div class="footer">
-        <p>Generiert mit Newspaper Framework für LLMs</p>
-        <p>Statistik: {{ data.statistics.total_articles }} Artikel, {{ data.statistics.total_quizzes }} Quiz, {{ data.statistics.total_sudokus }} Sudoku, {{ data.statistics.total_crosswords }} Kreuzworträtsel</p>
+        <p>Generiert mit Newspaper Framework f&uuml;r LLMs</p>
+        <p>Statistik: {{ data.statistics.total_articles }} Artikel, {{ data.statistics.total_quizzes }} Quiz, {{ data.statistics.total_sudokus }} Sudoku, {{ data.statistics.total_crosswords }} Kreuzwortr&auml;tsel</p>
     </div>
+
+    <script>
+    function checkQuiz(quizIdx) {
+        var container = document.getElementById('quiz-' + quizIdx);
+        var questions = container.querySelectorAll('.question');
+        var correct = 0;
+        var total = questions.length;
+
+        questions.forEach(function(q) {
+            var correctIdx = parseInt(q.getAttribute('data-correct'));
+            var selected = q.querySelector('input[type="radio"]:checked');
+            var feedback = q.querySelector('.quiz-feedback');
+            var labels = q.querySelectorAll('.quiz-option');
+
+            labels.forEach(function(l, i) {
+                l.classList.remove('correct', 'incorrect');
+            });
+
+            if (selected && parseInt(selected.value) === correctIdx) {
+                correct++;
+                feedback.textContent = 'Richtig!';
+                feedback.className = 'quiz-feedback correct-text';
+                labels[correctIdx].classList.add('correct');
+            } else {
+                feedback.textContent = 'Falsch.';
+                feedback.className = 'quiz-feedback incorrect-text';
+                if (selected) {
+                    labels[parseInt(selected.value)].classList.add('incorrect');
+                }
+                labels[correctIdx].classList.add('correct');
+            }
+            feedback.style.display = 'inline';
+        });
+
+        var result = container.querySelector('.quiz-result');
+        result.innerHTML = '<strong>Ergebnis: ' + correct + ' / ' + total + ' richtig</strong>';
+    }
+
+    function checkSudoku(sudokuIdx) {
+        var container = document.getElementById('sudoku-' + sudokuIdx);
+        var solution = JSON.parse(container.getAttribute('data-solution'));
+        var inputs = container.querySelectorAll('.sudoku-input');
+        var errors = 0;
+        var filled = 0;
+
+        inputs.forEach(function(inp) {
+            var r = parseInt(inp.getAttribute('data-row'));
+            var c = parseInt(inp.getAttribute('data-col'));
+            var val = parseInt(inp.value);
+            inp.classList.remove('correct', 'incorrect');
+
+            if (!isNaN(val) && val >= 1 && val <= 9) {
+                filled++;
+                if (val === solution[r][c]) {
+                    inp.classList.add('correct');
+                } else {
+                    inp.classList.add('incorrect');
+                    errors++;
+                }
+            }
+        });
+
+        var result = container.querySelector('.sudoku-result');
+        if (filled === 0) {
+            result.innerHTML = '<em>Bitte Felder ausf&uuml;llen.</em>';
+        } else if (errors === 0) {
+            result.innerHTML = '<strong class="correct-text">Alles richtig!</strong>';
+        } else {
+            result.innerHTML = '<strong class="incorrect-text">' + errors + ' Fehler gefunden.</strong>';
+        }
+    }
+
+    function checkCrossword(cwIdx) {
+        var container = document.getElementById('crossword-' + cwIdx);
+        var inputs = container.querySelectorAll('.crossword-input');
+        var errors = 0;
+        var filled = 0;
+
+        inputs.forEach(function(inp) {
+            var answer = inp.getAttribute('data-answer');
+            var val = inp.value.toUpperCase();
+            inp.classList.remove('correct', 'incorrect');
+
+            if (val.length > 0) {
+                filled++;
+                if (val === answer.toUpperCase()) {
+                    inp.classList.add('correct');
+                } else {
+                    inp.classList.add('incorrect');
+                    errors++;
+                }
+            }
+        });
+
+        var result = container.querySelector('.crossword-result');
+        if (filled === 0) {
+            result.innerHTML = '<em>Bitte Felder ausf&uuml;llen.</em>';
+        } else if (errors === 0) {
+            result.innerHTML = '<strong class="correct-text">Alles richtig!</strong>';
+        } else {
+            result.innerHTML = '<strong class="incorrect-text">' + errors + ' Fehler gefunden.</strong>';
+        }
+    }
+
+    document.querySelectorAll('.sudoku-input').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            this.value = this.value.replace(/[^1-9]/g, '');
+        });
+    });
+    </script>
 </body>
 </html>

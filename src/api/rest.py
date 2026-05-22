@@ -5,6 +5,7 @@ import logging
 from flask import Flask, request, jsonify
 from src.newspaper.core import Newspaper
 from src.newspaper.content.quiz import QuizSystem
+from src.newspaper.content.crossword import CrosswordGenerator
 from src.newspaper.exceptions import NewspaperFrameworkError
 
 app = Flask(__name__)
@@ -102,6 +103,28 @@ def add_sudoku_endpoint(newspaper_id):
     paper = api.newspapers[newspaper_id]
     paper.add_sudoku(difficulty)
     return jsonify({"success": True, "message": f"Sudoku ({difficulty}) added."}), 201
+
+
+@app.route('/api/newspaper/<newspaper_id>/crossword', methods=['POST'])
+def add_crossword_endpoint(newspaper_id):
+    if newspaper_id not in api.newspapers:
+        return jsonify({"error": "Newspaper not found"}), 404
+
+    data = request.get_json()
+    if not data or "words" not in data or "clues" not in data:
+        return jsonify({"error": "words and clues are required"}), 400
+
+    paper = api.newspapers[newspaper_id]
+    try:
+        generator = CrosswordGenerator(
+            words=data["words"],
+            clues=data["clues"],
+        )
+        crossword = generator.generate()
+        paper.add_crossword(crossword)
+        return jsonify({"success": True, "message": "Crossword added."}), 201
+    except NewspaperFrameworkError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @app.route('/api/newspaper/<newspaper_id>/export', methods=['POST'])

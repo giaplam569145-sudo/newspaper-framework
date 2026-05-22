@@ -1,12 +1,11 @@
 """Base class for exporters."""
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Any, Dict
 
 class Exporter(ABC):
-    """Abstract base class for exporters."""
 
     @abstractmethod
-    def export(self, data: Dict, filename: str) -> str:
+    def export(self, data: Dict[str, Any], filename: str) -> str:
         """Exports data to a file."""
         pass

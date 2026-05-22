@@ -1,6 +1,6 @@
 """Quiz system implementation."""
 
-from typing import List, Dict
+from typing import Any, Dict, List
 from dataclasses import asdict
 from ..models import Question
 from .base import ContentGenerator
@@ -38,7 +38,7 @@ class QuizSystem(ContentGenerator):
         self.questions.append(q)
         return q
 
-    def generate(self) -> Dict:
+    def generate(self) -> Dict[str, Any]:
         """Generates a dictionary representation of the quiz.
 
         Returns:
@@ -47,7 +47,7 @@ class QuizSystem(ContentGenerator):
         """
         return self.to_dict()
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Returns dictionary representation of the quiz for JSON export."""
         return {
             "title": self.title,
