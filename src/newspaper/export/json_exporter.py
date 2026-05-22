@@ -1,8 +1,11 @@
 """JSON exporter implementation."""
 
 import json
+import logging
 from .base import Exporter
 from typing import Dict
+
+logger = logging.getLogger(__name__)
 
 class JsonExporter(Exporter):
     """Exports newspaper data to JSON."""
@@ -21,5 +24,5 @@ class JsonExporter(Exporter):
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(json_str)
 
-        print(f"JSON exported: {filename}")
+        logger.info("JSON exported: %s", filename)
         return json_str

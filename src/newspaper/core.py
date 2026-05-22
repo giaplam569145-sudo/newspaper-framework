@@ -1,17 +1,20 @@
 """Core Newspaper class."""
 
 import datetime
+import logging
 import os
 from dataclasses import asdict
-from typing import List, Optional, Dict, Union
+from typing import List, Optional, Dict
 
 from .models import Article, LayoutConfig, MediaConfig
-from .exceptions import NewspaperFrameworkError, NewspaperFrameworkWarning
+from .exceptions import NewspaperFrameworkError
 from .content.quiz import QuizSystem
 from .content.sudoku import SudokuGenerator
 from .content.crossword import Crossword, CrosswordGenerator
 from .export.html_exporter import HtmlExporter
 from .export.json_exporter import JsonExporter
+
+logger = logging.getLogger(__name__)
 
 
 class Newspaper:
@@ -48,7 +51,7 @@ class Newspaper:
         self.articles: List[Article] = []
         self.quizzes: List[QuizSystem] = []
         self.sudokus: List[SudokuGenerator] = []
-        self.crosswords: List[Dict] = [] # Storing dict or object? For consistency, let's store objects if possible, but Crossword is a dataclass.
+        self.crosswords: List[Crossword] = []
         self.date = datetime.datetime.now().strftime("%d.%m.%Y")
 
         # Validation
@@ -65,41 +68,44 @@ class Newspaper:
             bool: True if the logo was set successfully, False otherwise.
         """
         if not os.path.exists(logo_path):
-            print(f"Warning: Logo file not found: {logo_path}")
+            logger.warning("Logo file not found: %s", logo_path)
             return False
 
         self.media.logo_path = logo_path
-        print(f"Logo set: {logo_path}")
+        logger.info("Logo set: %s", logo_path)
         return True
 
-    def add_article(self, title: str, content: str, **kwargs) -> Article:
+    def add_article(self, title: str, content: str, force: bool = False, **kwargs) -> Article:
         """Adds an article to the newspaper.
 
         Args:
             title (str): The title of the article.
             content (str): The main content of the article.
+            force (bool): If True, auto-correct short content instead of raising.
             **kwargs: Additional keyword arguments for the Article.
 
         Returns:
             Article: The created and added Article object.
+
+        Raises:
+            NewspaperFrameworkError: If validation fails and force=False.
         """
         try:
             article = Article(title=title, content=content, **kwargs)
             self.articles.append(article)
-            print(f"Article '{title[:30]}...' added successfully.")
             return article
         except NewspaperFrameworkError as e:
-            print(f"Warning: {e}")
+            if not force:
+                raise
             corrected_content = content + " (Content automatically completed)"
             article = Article(title=title, content=corrected_content, **kwargs)
             self.articles.append(article)
-            print(f"Article added with automatic correction.")
             return article
 
     def add_quiz(self, quiz: QuizSystem) -> QuizSystem:
         """Adds a quiz to the newspaper."""
         self.quizzes.append(quiz)
-        print(f"Quiz '{quiz.title}' added.")
+        logger.info("Quiz '%s' added.", quiz.title)
         return quiz
 
     def add_sudoku(self, difficulty: str = "medium") -> SudokuGenerator:
@@ -107,13 +113,13 @@ class Newspaper:
         sudoku = SudokuGenerator(difficulty)
         sudoku.generate()
         self.sudokus.append(sudoku)
-        print(f"Sudoku ({difficulty}) added.")
+        logger.info("Sudoku (%s) added.", difficulty)
         return sudoku
 
     def add_crossword(self, crossword: Crossword) -> Crossword:
         """Adds a crossword puzzle to the newspaper."""
-        self.crosswords.append(asdict(crossword)) # Store as dict to simplify
-        print("Crossword added.")
+        self.crosswords.append(crossword)
+        logger.info("Crossword added.")
         return crossword
 
     def generate(self) -> Dict:
@@ -133,7 +139,7 @@ class Newspaper:
             "articles": [asdict(article) for article in sorted_articles],
             "quizzes": [quiz.to_dict() for quiz in self.quizzes],
             "sudokus": [s.to_dict() for s in self.sudokus],
-            "crosswords": self.crosswords,
+            "crosswords": [asdict(cw) for cw in self.crosswords],
             "statistics": {
                 "total_articles": len(self.articles),
                 "total_quizzes": len(self.quizzes),

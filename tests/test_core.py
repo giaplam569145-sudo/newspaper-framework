@@ -35,11 +35,16 @@ class TestNewspaperAddArticle:
         assert len(n.articles) == 1
         assert a.title == "News"
 
-    def test_short_content_auto_corrected(self):
+    def test_short_content_auto_corrected_with_force(self):
         n = Newspaper("Test")
-        a = n.add_article(title="Short", content="hi")
+        a = n.add_article(title="Short", content="hi", force=True)
         assert len(n.articles) == 1
-        assert "automatically completed" in a.content or "vervollst" in a.content
+        assert "automatically completed" in a.content
+
+    def test_short_content_raises_without_force(self):
+        n = Newspaper("Test")
+        with pytest.raises(NewspaperFrameworkError):
+            n.add_article(title="Short", content="hi")
 
 
 class TestNewspaperGenerate:

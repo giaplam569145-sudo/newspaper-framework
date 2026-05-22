@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "newspaper-framework"
+version = "1.0.0"
+description = "A framework for AI-driven newspaper production"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "jinja2>=3.1",
+    "flask>=3.0",
+    "pycrossword-generator>=0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "mypy>=1.8",
+    "ruff>=0.4",
+]
+mcp = [
+    "mcp>=1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true

@@ -1,8 +1,12 @@
 """Sample Newspaper Generation Script."""
 
+import logging
+
 from src.newspaper.core import Newspaper
 from src.newspaper.content.quiz import QuizSystem
 from src.newspaper.content.crossword import CrosswordGenerator
+
+logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
 def create_sample_newspaper():
     """Creates a sample newspaper to demonstrate the framework's usage."""
@@ -51,7 +55,4 @@ def create_sample_newspaper():
     return paper
 
 if __name__ == "__main__":
-    print("Starting Newspaper Framework Demo...")
     create_sample_newspaper()
-    print("Demo successfully completed!")
-    print("Files created: sample_newspaper.html, sample_newspaper.json")

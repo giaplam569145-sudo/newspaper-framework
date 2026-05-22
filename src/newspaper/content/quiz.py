@@ -3,7 +3,6 @@
 from typing import List, Dict
 from dataclasses import asdict
 from ..models import Question
-from ..exceptions import NewspaperFrameworkWarning
 from .base import ContentGenerator
 
 class QuizSystem(ContentGenerator):
