@@ -1,4 +1,12 @@
 __pycache__/
 *.pyc
-sample_newspaper.html
-sample_newspaper.json
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+*.html
+*.json
+api.log
+*.log
+.env
