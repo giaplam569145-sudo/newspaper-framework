@@ -1,241 +1,1045 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ data.title }}</title>
+    <title>{{ data.title }} - Chronicle AI Newspaper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Light Theme Tokens */
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-elevated: #f1f5f9;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary: {{ data.layout.primary_color if data.layout.primary_color else '#2563eb' }};
+            --primary-light: #60a5fa;
+            --primary-bg: #eff6ff;
+            --secondary: {{ data.layout.secondary_color if data.layout.secondary_color else '#10b981' }};
+            --secondary-bg: #ecfdf5;
+            --accent-gold: #f59e0b;
+            --accent-gold-bg: #fffbeb;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-full: 9999px;
+            --font-serif: 'Newsreader', Georgia, serif;
+            --font-sans: {{ data.layout.font_family if data.layout.font_family else "'Inter', sans-serif" }};
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Tokens */
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-surface-elevated: #1f2937;
+            --bg-glass: rgba(17, 24, 39, 0.85);
+            --border-color: #1f2937;
+            --border-hover: #374151;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --primary-light: #3b82f6;
+            --primary-bg: rgba(59, 130, 246, 0.15);
+            --secondary-bg: rgba(16, 185, 129, 0.15);
+            --accent-gold-bg: rgba(245, 158, 11, 0.15);
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 30px rgba(0,0,0,0.6);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            [data-theme="auto"] {
+                --bg-base: #090d16;
+                --bg-surface: #111827;
+                --bg-surface-elevated: #1f2937;
+                --bg-glass: rgba(17, 24, 39, 0.85);
+                --border-color: #1f2937;
+                --border-hover: #374151;
+                --text-primary: #f8fafc;
+                --text-secondary: #cbd5e1;
+                --text-muted: #64748b;
+                --primary-light: #3b82f6;
+                --primary-bg: rgba(59, 130, 246, 0.15);
+                --secondary-bg: rgba(16, 185, 129, 0.15);
+                --accent-gold-bg: rgba(245, 158, 11, 0.15);
+                --danger-bg: rgba(239, 68, 68, 0.15);
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+                --shadow-lg: 0 12px 30px rgba(0,0,0,0.6);
+            }
+        }
+
+        /* Global Reset & Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            transition: background-color var(--transition-smooth), color var(--transition-smooth);
+        }
+
         body {
-            font-family: {{ data.layout.font_family }};
-            max-width: {{ data.layout.max_width }}px;
+            max-width: {{ data.layout.max_width if data.layout.max_width else 1280 }}px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
+            padding: 0 20px 60px 20px;
             line-height: 1.6;
-            color: #333;
         }
-        .header {
+
+        /* Reading Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent-gold));
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+        }
+
+        /* Sticky Glass Navigation Bar */
+        .top-nav {
+            position: sticky;
+            top: 15px;
+            z-index: 900;
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 12px 24px;
+            margin: 15px 0 30px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-smooth);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-family: var(--font-serif);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .nav-logo-icon {
+            width: 32px;
+            height: 32px;
+            fill: var(--primary);
+            filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nav-link {
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background-color: var(--bg-surface-elevated);
+        }
+
+        .theme-toggle-btn {
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .theme-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .theme-toggle-btn:hover svg {
+            transform: rotate(20deg) scale(1.1);
+        }
+
+        /* Editorial Header / Masthead */
+        .masthead {
             text-align: center;
-            color: {{ data.layout.primary_color }};
-            border-bottom: 3px solid {{ data.layout.secondary_color }};
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            padding: 30px 20px 40px 20px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 40px;
+            position: relative;
         }
-        .logo {
+
+        .masthead-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-bg);
+            color: var(--primary);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .masthead-logo {
+            max-width: {{ data.media.logo_width if data.media.logo_width else 240 }}px;
+            max-height: {{ data.media.logo_height if data.media.logo_height else 120 }}px;
             margin-bottom: 15px;
-            max-width: {{ data.media.logo_width }}px;
-            max-height: {{ data.media.logo_height }}px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            transition: transform var(--transition-smooth);
         }
-        .article {
-            margin-bottom: {{ data.layout.spacing }}px;
-            padding: 20px;
-            border-left: 4px solid {{ data.layout.secondary_color }};
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .masthead-logo:hover {
+            transform: scale(1.02);
         }
+
+        .masthead-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2.5rem, 5vw, 4.2rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 12px;
+        }
+
+        .masthead-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-family: var(--font-mono);
+            flex-wrap: wrap;
+        }
+
+        .masthead-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Section Headlines */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 40px 0 24px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--primary);
+        }
+
+        /* Articles Grid & Responsive Layout */
+        .articles-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 28px;
+            margin-bottom: 50px;
+        }
+
+        .article-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--transition-smooth), box-shadow var(--transition-smooth), border-color var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-hover);
+        }
+
+        /* Featured Lead Article Span */
+        .article-card.featured {
+            grid-column: span 12;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-elevated) 100%);
+            border-left: 6px solid var(--primary);
+        }
+
+        .article-card.standard {
+            grid-column: span 6;
+            border-top: 4px solid var(--secondary);
+        }
+
+        .article-category-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary);
+            background: var(--primary-bg);
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            margin-bottom: 12px;
+            width: fit-content;
+        }
+
         .article-title {
-            color: {{ data.layout.primary_color }};
-            margin-top: 0;
-            font-size: 1.5em;
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1.25;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            transition: color var(--transition-fast);
         }
+
+        .featured .article-title {
+            font-size: 2.2rem;
+        }
+
+        .article-title:hover {
+            color: var(--primary);
+        }
+
         .meta {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            font-weight: 500;
         }
+
+        .article-body {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .article-image-wrapper {
+            position: relative;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
         .article-image {
-            max-width: 100%;
+            width: 100%;
             height: auto;
-            margin: 10px 0;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
         }
-        .quiz, .crossword {
-            background-color: #f8f9fa;
+
+        .article-card:hover .article-image {
+            transform: scale(1.03);
+        }
+
+        .article-caption {
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 6px;
+        }
+
+        /* Interactive Quiz Cards & Animations */
+        .quiz-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-smooth);
+        }
+
+        .question-box {
+            background-color: var(--bg-surface-elevated);
+            border-radius: var(--radius-sm);
             padding: 20px;
-            margin: 20px 0;
-            border-radius: 5px;
+            margin: 18px 0;
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-fast);
         }
-        .sudoku {
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            position: relative;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-bg);
+            transform: translateX(4px);
+        }
+
+        .quiz-option input[type="radio"] {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .quiz-option.correct {
+            background-color: var(--secondary-bg) !important;
+            border-color: var(--secondary) !important;
+            color: var(--text-primary) !important;
+            font-weight: 600;
+            animation: pulseSuccess 0.5s ease;
+        }
+
+        .quiz-option.incorrect {
+            background-color: var(--danger-bg) !important;
+            border-color: var(--danger) !important;
+            color: var(--text-primary) !important;
+            animation: shakeError 0.4s ease;
+        }
+
+        .quiz-feedback {
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+        }
+
+        .correct-text {
+            color: var(--secondary);
+            background-color: var(--secondary-bg);
+        }
+
+        .incorrect-text {
+            color: var(--danger);
+            background-color: var(--danger-bg);
+        }
+
+        /* Action Buttons */
+        .btn-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px 26px;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-check:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-check:active {
+            transform: translateY(0);
+        }
+
+        /* Sudoku Interactive Section */
+        .sudoku-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
             text-align: center;
-            margin: 20px 0;
         }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-        }
+
         table.sudoku-table {
             border-collapse: collapse;
-            margin: 20px auto;
+            margin: 24px auto;
+            background-color: var(--bg-surface-elevated);
+            border: 3px solid var(--text-primary);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
         }
+
         .sudoku-cell {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #ccc;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border-color);
             text-align: center;
+            font-size: 1.15rem;
+            font-weight: 600;
+            position: relative;
+            transition: background-color var(--transition-fast);
         }
+
+        .sudoku-cell.bold {
+            color: var(--text-primary);
+            background-color: var(--bg-surface);
+        }
+
+        .sudoku-cell.border-top {
+            border-top: 3px solid var(--text-primary);
+        }
+
+        .sudoku-cell.border-left {
+            border-left: 3px solid var(--text-primary);
+        }
+
         .sudoku-input {
             width: 100%;
+            height: 100%;
             border: none;
             text-align: center;
-            font-size: 14px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            background: transparent;
+            color: var(--primary);
+            outline: none;
+            transition: all var(--transition-fast);
         }
-        .bold { font-weight: bold; }
-        .border-top { border-top: 2px solid black; }
-        .border-left { border-left: 2px solid black; }
 
-        .btn-check {
-            display: inline-block;
-            margin: 10px 0;
-            padding: 8px 20px;
-            background-color: {{ data.layout.secondary_color }};
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+        .sudoku-input:focus {
+            background-color: var(--primary-bg);
+            box-shadow: inset 0 0 0 2px var(--primary);
         }
-        .btn-check:hover { opacity: 0.9; }
-        .correct { background-color: #d4edda !important; }
-        .incorrect { background-color: #f8d7da !important; }
-        .correct-text { color: #155724; font-weight: bold; }
-        .incorrect-text { color: #721c24; font-weight: bold; }
+
+        .sudoku-input.correct {
+            background-color: var(--secondary-bg) !important;
+            color: var(--secondary) !important;
+            animation: pulseSuccess 0.4s ease;
+        }
+
+        .sudoku-input.incorrect {
+            background-color: var(--danger-bg) !important;
+            color: var(--danger) !important;
+            animation: shakeError 0.4s ease;
+        }
+
+        /* Crossword Interactive Section */
+        .crossword-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .crossword-layout {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 32px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        table.crossword-table {
+            border-collapse: collapse;
+            background-color: var(--bg-surface-elevated);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .crossword-cell {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: middle;
+            position: relative;
+        }
+
         .crossword-input {
-            width: 28px;
-            height: 28px;
+            width: 100%;
+            height: 100%;
             border: none;
             text-align: center;
             text-transform: uppercase;
-            font-size: 14px;
-            background: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            outline: none;
+            transition: all var(--transition-fast);
         }
 
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .article { padding: 15px; }
+        .crossword-input:focus {
+            background-color: var(--primary-bg);
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+
+        .crossword-input.correct {
+            background-color: var(--secondary-bg) !important;
+            color: var(--secondary) !important;
+            animation: pulseSuccess 0.4s ease;
+        }
+
+        .crossword-input.incorrect {
+            background-color: var(--danger-bg) !important;
+            color: var(--danger) !important;
+            animation: shakeError 0.4s ease;
+        }
+
+        .clues-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background-color: var(--bg-surface-elevated);
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .clues-title {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .clues-list {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .clues-list li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .footer-brand {
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .footer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-surface-elevated);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Directional Keyframes & Micro-Animations */
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .animate-fade-up {
+            opacity: 0;
+            transform: translateY(24px);
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .articles-container { grid-template-columns: 1fr; }
+            .article-card.featured, .article-card.standard { grid-column: span 1; grid-template-columns: 1fr; }
+            .crossword-layout { grid-template-columns: 1fr; }
+            .clues-container { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 0 12px 40px 12px; }
+            .top-nav { flex-direction: column; gap: 12px; align-items: stretch; }
+            .nav-links { overflow-x: auto; padding-bottom: 4px; }
+            .sudoku-cell { width: 34px; height: 34px; font-size: 0.95rem; }
+            .crossword-cell { width: 28px; height: 28px; }
+            .crossword-input { font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- Top Progress Scroll Bar -->
+    <div id="progress-bar"></div>
+
+    <!-- Sticky Navigation Bar -->
+    <nav class="top-nav">
+        <a href="#" class="nav-brand">
+            <svg class="nav-logo-icon" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            <span>{{ data.title }}</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#articles" class="nav-link">Artikel</a></li>
+            {% if data.quizzes %}<li><a href="#quizzes" class="nav-link">Quiz</a></li>{% endif %}
+            {% if data.sudokus %}<li><a href="#sudokus" class="nav-link">Sudoku</a></li>{% endif %}
+            {% if data.crosswords %}<li><a href="#crosswords" class="nav-link">Kreuzworträtsel</a></li>{% endif %}
+        </ul>
+        <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" aria-label="Theme Umschalten">
+            <svg id="theme-icon-sun" style="display:none" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-4.5 2.24-4.5 5s1.74 5 4.5 5 4.5-2.24 4.5-5-1.74-5-4.5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0zm12.37-12.37l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
+            <svg id="theme-icon-moon" viewBox="0 0 24 24"><path d="M12.3 2c.43 0 .77.35.73.78-.38 4.8 3.1 9.02 7.9 9.4.43.03.78.37.78.8 0 5.25-4.25 9.52-9.5 9.52C7 22.5 2.7 18.25 2.7 13c0-4.96 3.68-9.08 8.5-9.48.37-.03.7.18.85.48z"/></svg>
+            <span id="theme-toggle-label">Dark</span>
+        </button>
+    </nav>
+
+    <!-- Header / Logo -->
+    <div class="header masthead animate-fade-up">
         {% if data.media.logo_path %}
-        <img src="{{ data.media.logo_path }}" alt="Logo" class="logo">
+        <img src="{{ data.media.logo_path }}" alt="Logo" class="logo masthead-logo">
         {% endif %}
-        <h1>{{ data.title }}</h1>
-        <p class="date">{{ data.date }}</p>
+        <h1 class="masthead-title">{{ data.title }}</h1>
+        <p class="date masthead-meta">{{ data.date }}</p>
     </div>
 
-    <!-- Articles -->
-    {% for article in data.articles %}
-    <div class="article">
-        <h2 class="article-title">{{ article.title }}</h2>
-        <div class="meta">Von {{ article.author }} | {{ article.category }}</div>
-        {% if article.image_path %}
-        <img src="{{ article.image_path }}" alt="{{ article.image_caption }}" class="article-image">
-        {% endif %}
-        <p>{{ article.content }}</p>
-        {% if article.image_caption %}
-        <p><em>{{ article.image_caption }}</em></p>
-        {% endif %}
-    </div>
-    {% endfor %}
-
-    <!-- Quizzes -->
-    {% for quiz in data.quizzes %}
-    <div class="quiz" id="quiz-{{ loop.index }}">
-        <h3>{{ quiz.title }}</h3>
-        {% set quiz_idx = loop.index %}
-        {% for q in quiz.questions %}
-        {% set q_idx = loop.index %}
-        <div class="question" style="margin: 15px 0;" data-correct="{{ q.correct_index }}">
-            <p><strong>Frage {{ q_idx }}:</strong> {{ q.question }}</p>
-            <div class="options">
-                {% for option in q.options %}
-                <label style="display: block; margin: 5px 0;" class="quiz-option">
-                    <input type="radio" name="q{{ quiz_idx }}_{{ q_idx }}" value="{{ loop.index0 }}"> {{ option }}
-                </label>
-                {% endfor %}
+    <!-- Articles Section -->
+    <section id="articles">
+        <div class="section-header">
+            <h2 class="section-title">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                Aktuelle Berichte
+            </h2>
+        </div>
+        <div class="articles-container">
+            {% for article in data.articles %}
+            <div class="article article-card {{ 'featured' if loop.first else 'standard' }} animate-fade-up">
+                <div>
+                    <span class="article-category-badge">{{ article.category }}</span>
+                    <h2 class="article-title">{{ article.title }}</h2>
+                    <div class="meta article-meta">Von {{ article.author }} | {{ article.category }}</div>
+                    {% if article.image_path %}
+                    <div class="article-image-wrapper">
+                        <img src="{{ article.image_path }}" alt="{{ article.image_caption }}" class="article-image">
+                    </div>
+                    {% endif %}
+                    <div class="article-body">
+                        <p>{{ article.content }}</p>
+                    </div>
+                    {% if article.image_caption %}
+                    <p class="article-caption"><em>{{ article.image_caption }}</em></p>
+                    {% endif %}
+                </div>
             </div>
-            <span class="quiz-feedback" style="display:none; margin-left:10px;"></span>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Quizzes Section -->
+    {% if data.quizzes %}
+    <section id="quizzes">
+        <div class="section-header">
+            <h2 class="section-title">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                Wissen &amp; Quiz
+            </h2>
+        </div>
+        {% for quiz in data.quizzes %}
+        <div class="quiz quiz-card animate-fade-up" id="quiz-{{ loop.index }}">
+            <h3>{{ quiz.title }}</h3>
+            {% set quiz_idx = loop.index %}
+            {% for q in quiz.questions %}
+            {% set q_idx = loop.index %}
+            <div class="question question-box" data-correct="{{ q.correct_index }}">
+                <p style="font-weight: 600; margin-bottom: 10px;"><strong>Frage {{ q_idx }}:</strong> {{ q.question }}</p>
+                <div class="options">
+                    {% for option in q.options %}
+                    <label class="quiz-option">
+                        <input type="radio" name="q{{ quiz_idx }}_{{ q_idx }}" value="{{ loop.index0 }}"> {{ option }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <span class="quiz-feedback" style="display:none; margin-left:10px;"></span>
+            </div>
+            {% endfor %}
+            <button class="btn-check" onclick="checkQuiz({{ quiz_idx }})">Antworten prüfen</button>
+            <div class="quiz-result" style="margin-top:14px;"></div>
         </div>
         {% endfor %}
-        <button class="btn-check" onclick="checkQuiz({{ quiz_idx }})">Antworten pr&uuml;fen</button>
-        <div class="quiz-result" style="margin-top:10px;"></div>
-    </div>
-    {% endfor %}
+    </section>
+    {% endif %}
 
-    <!-- Sudokus -->
-    {% for sudoku in data.sudokus %}
-    <div class="sudoku" id="sudoku-{{ loop.index }}" data-solution='{{ sudoku.solution | tojson }}'>
-        <h3>Sudoku ({{ sudoku.difficulty }})</h3>
-        <table class="sudoku-table">
-            {% for row in sudoku.grid %}
-            <tr>
-                {% set row_loop = loop %}
-                {% for cell in row %}
-                {% set border_class = "" %}
-                {% if row_loop.index0 % 3 == 0 and row_loop.index0 != 0 %}{% set border_class = border_class + " border-top" %}{% endif %}
-                {% if loop.index0 % 3 == 0 and loop.index0 != 0 %}{% set border_class = border_class + " border-left" %}{% endif %}
+    <!-- Sudokus Section -->
+    {% if data.sudokus %}
+    <section id="sudokus">
+        <div class="section-header">
+            <h2 class="section-title">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm8 16H5v-4h6v4zm0-6H5V9h6v4zm0-6H5V5h6v2zm8 12h-6v-4h6v4zm0-6h-6V9h6v4zm0-6h-6V5h6v2z"/></svg>
+                Sudoku Rätsel
+            </h2>
+        </div>
+        {% for sudoku in data.sudokus %}
+        <div class="sudoku sudoku-card animate-fade-up" id="sudoku-{{ loop.index }}" data-solution='{{ sudoku.solution | tojson }}'>
+            <h3>Sudoku ({{ sudoku.difficulty }})</h3>
+            <table class="sudoku-table">
+                {% for row in sudoku.grid %}
+                <tr>
+                    {% set row_loop = loop %}
+                    {% for cell in row %}
+                    {% set border_class = "" %}
+                    {% if row_loop.index0 % 3 == 0 and row_loop.index0 != 0 %}{% set border_class = border_class + " border-top" %}{% endif %}
+                    {% if loop.index0 % 3 == 0 and loop.index0 != 0 %}{% set border_class = border_class + " border-left" %}{% endif %}
 
-                <td class="sudoku-cell {{ border_class }} {% if cell != 0 %}bold{% endif %}">
-                    {% if cell == 0 %}
-                    <input type="text" maxlength="1" class="sudoku-input" data-row="{{ row_loop.index0 }}" data-col="{{ loop.index0 }}">
-                    {% else %}
-                    {{ cell }}
-                    {% endif %}
-                </td>
+                    <td class="sudoku-cell {{ border_class }} {% if cell != 0 %}bold{% endif %}">
+                        {% if cell == 0 %}
+                        <input type="text" maxlength="1" class="sudoku-input" data-row="{{ row_loop.index0 }}" data-col="{{ loop.index0 }}">
+                        {% else %}
+                        {{ cell }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </table>
-        <button class="btn-check" onclick="checkSudoku({{ loop.index }})">Sudoku pr&uuml;fen</button>
-        <div class="sudoku-result" style="margin-top:10px;"></div>
-    </div>
-    {% endfor %}
+            </table>
+            <button class="btn-check" onclick="checkSudoku({{ loop.index }})">Sudoku prüfen</button>
+            <div class="sudoku-result" style="margin-top:14px;"></div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
 
-    <!-- Crosswords -->
-    {% for crossword in data.crosswords %}
-    <div class="crossword" id="crossword-{{ loop.index }}">
-        <h3>Kreuzwortr&auml;tsel</h3>
-        <table style="border-collapse: collapse; margin: 20px auto;">
-            {% for row in crossword.grid %}
-            <tr>
-                {% for cell in row %}
-                <td style="width: 30px; height: 30px; border: 1px solid #ccc; text-align: center;">
-                    {% if cell and cell|length == 1 and cell != ' ' %}
-                    <input type="text" maxlength="1" class="crossword-input" data-answer="{{ cell }}" value="">
-                    {% elif cell %}
-                    <span style="font-size:11px; position:relative;">{{ cell }}</span>
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </table>
-        <h4>Horizontal</h4>
-        <ul>
-            {% for num, clue in crossword.clues.horizontal %}
-            <li><strong>{{ num }}:</strong> {{ clue }}</li>
-            {% endfor %}
-        </ul>
-        <h4>Vertikal</h4>
-        <ul>
-            {% for num, clue in crossword.clues.vertical %}
-            <li><strong>{{ num }}:</strong> {{ clue }}</li>
-            {% endfor %}
-        </ul>
-        <button class="btn-check" onclick="checkCrossword({{ loop.index }})">Kreuzwortr&auml;tsel pr&uuml;fen</button>
-        <div class="crossword-result" style="margin-top:10px;"></div>
-    </div>
-    {% endfor %}
+    <!-- Crosswords Section -->
+    {% if data.crosswords %}
+    <section id="crosswords">
+        <div class="section-header">
+            <h2 class="section-title">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM11 7h2v4h-2zm0 6h2v4h-2z"/></svg>
+                Kreuzworträtsel
+            </h2>
+        </div>
+        {% for crossword in data.crosswords %}
+        <div class="crossword crossword-card animate-fade-up" id="crossword-{{ loop.index }}">
+            <h3>Kreuzworträtsel</h3>
+            <div class="crossword-layout">
+                <table class="crossword-table" style="border-collapse: collapse; margin: 20px auto;">
+                    {% for row in crossword.grid %}
+                    <tr>
+                        {% for cell in row %}
+                        <td class="crossword-cell" style="width: 34px; height: 34px; border: 1px solid var(--border-color); text-align: center;">
+                            {% if cell and cell|length == 1 and cell != ' ' %}
+                            <input type="text" maxlength="1" class="crossword-input" data-answer="{{ cell }}" value="">
+                            {% elif cell %}
+                            <span style="font-size:11px; font-weight:700; color:var(--text-muted);">{{ cell }}</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </table>
+                <div class="clues-container">
+                    <div>
+                        <div class="clues-title">Horizontal</div>
+                        <ul class="clues-list">
+                            {% for num, clue in crossword.clues.horizontal %}
+                            <li><strong>{{ num }}:</strong> {{ clue }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="clues-title">Vertikal</div>
+                        <ul class="clues-list">
+                            {% for num, clue in crossword.clues.vertical %}
+                            <li><strong>{{ num }}:</strong> {{ clue }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-check" onclick="checkCrossword({{ loop.index }})">Kreuzworträtsel prüfen</button>
+            <div class="crossword-result" style="margin-top:14px;"></div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
 
-    <div class="footer">
-        <p>Generiert mit Newspaper Framework f&uuml;r LLMs</p>
-        <p>Statistik: {{ data.statistics.total_articles }} Artikel, {{ data.statistics.total_quizzes }} Quiz, {{ data.statistics.total_sudokus }} Sudoku, {{ data.statistics.total_crosswords }} Kreuzwortr&auml;tsel</p>
-    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-brand">{{ data.title }}</div>
+        <p>Generiert mit Newspaper Framework für LLMs</p>
+        <div class="footer-stats">
+            <span class="stat-badge">Statistik: {{ data.statistics.total_articles }} Artikel</span>
+            <span class="stat-badge">{{ data.statistics.total_quizzes }} Quiz</span>
+            <span class="stat-badge">{{ data.statistics.total_sudokus }} Sudoku</span>
+            <span class="stat-badge">{{ data.statistics.total_crosswords }} Kreuzworträtsel</span>
+        </div>
+    </footer>
 
+    <!-- Interactive Scripts & Theme Handler -->
     <script>
+    // Theme Management with LocalStorage & System Detection
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            setTheme(savedTheme);
+        } else {
+            setTheme('auto');
+        }
+    }
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        updateThemeUI(theme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const isDark = currentTheme === 'dark' || (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const newTheme = isDark ? 'light' : 'dark';
+        setTheme(newTheme);
+    }
+
+    function updateThemeUI(theme) {
+        const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const sunIcon = document.getElementById('theme-icon-sun');
+        const moonIcon = document.getElementById('theme-icon-moon');
+        const label = document.getElementById('theme-toggle-label');
+
+        if (isDark) {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+            label.textContent = 'Light';
+        } else {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+            label.textContent = 'Dark';
+        }
+    }
+
+    // Scroll Progress Bar Indicator
+    window.addEventListener('scroll', function() {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        document.getElementById('progress-bar').style.width = scrolled + '%';
+    });
+
+    // Quiz Checking Logic
     function checkQuiz(quizIdx) {
         var container = document.getElementById('quiz-' + quizIdx);
         var questions = container.querySelectorAll('.question');
@@ -248,7 +1052,7 @@
             var feedback = q.querySelector('.quiz-feedback');
             var labels = q.querySelectorAll('.quiz-option');
 
-            labels.forEach(function(l, i) {
+            labels.forEach(function(l) {
                 l.classList.remove('correct', 'incorrect');
             });
 
@@ -265,13 +1069,14 @@
                 }
                 labels[correctIdx].classList.add('correct');
             }
-            feedback.style.display = 'inline';
+            feedback.style.display = 'inline-block';
         });
 
         var result = container.querySelector('.quiz-result');
         result.innerHTML = '<strong>Ergebnis: ' + correct + ' / ' + total + ' richtig</strong>';
     }
 
+    // Sudoku Checking Logic
     function checkSudoku(sudokuIdx) {
         var container = document.getElementById('sudoku-' + sudokuIdx);
         var solution = JSON.parse(container.getAttribute('data-solution'));
@@ -298,7 +1103,7 @@
 
         var result = container.querySelector('.sudoku-result');
         if (filled === 0) {
-            result.innerHTML = '<em>Bitte Felder ausf&uuml;llen.</em>';
+            result.innerHTML = '<em>Bitte Felder ausfüllen.</em>';
         } else if (errors === 0) {
             result.innerHTML = '<strong class="correct-text">Alles richtig!</strong>';
         } else {
@@ -306,6 +1111,7 @@
         }
     }
 
+    // Crossword Checking Logic & Focus Navigation
     function checkCrossword(cwIdx) {
         var container = document.getElementById('crossword-' + cwIdx);
         var inputs = container.querySelectorAll('.crossword-input');
@@ -330,7 +1136,7 @@
 
         var result = container.querySelector('.crossword-result');
         if (filled === 0) {
-            result.innerHTML = '<em>Bitte Felder ausf&uuml;llen.</em>';
+            result.innerHTML = '<em>Bitte Felder ausfüllen.</em>';
         } else if (errors === 0) {
             result.innerHTML = '<strong class="correct-text">Alles richtig!</strong>';
         } else {
@@ -338,9 +1144,26 @@
         }
     }
 
-    document.querySelectorAll('.sudoku-input').forEach(function(inp) {
-        inp.addEventListener('input', function() {
-            this.value = this.value.replace(/[^1-9]/g, '');
+    // Input Restrictions & Auto-Focus advance
+    document.addEventListener('DOMContentLoaded', function() {
+        initTheme();
+
+        document.querySelectorAll('.sudoku-input').forEach(function(inp) {
+            inp.addEventListener('input', function() {
+                this.value = this.value.replace(/[^1-9]/g, '');
+            });
+        });
+
+        document.querySelectorAll('.crossword-input').forEach(function(inp) {
+            inp.addEventListener('input', function(e) {
+                if (this.value.length === 1) {
+                    var allInputs = Array.from(document.querySelectorAll('.crossword-input'));
+                    var idx = allInputs.indexOf(this);
+                    if (idx >= 0 && idx < allInputs.length - 1) {
+                        allInputs[idx + 1].focus();
+                    }
+                }
+            });
         });
     });
     </script>
