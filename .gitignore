@@ -10,3 +10,4 @@ build/
 api.log
 *.log
 .env
+*.png
