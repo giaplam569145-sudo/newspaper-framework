@@ -4,7 +4,7 @@ import datetime
 import logging
 import os
 from dataclasses import asdict
-from typing import List, Optional, Dict
+from typing import Any, Dict, List, Optional
 
 from .models import Article, LayoutConfig, MediaConfig
 from .exceptions import NewspaperFrameworkError
@@ -75,7 +75,7 @@ class Newspaper:
         logger.info("Logo set: %s", logo_path)
         return True
 
-    def add_article(self, title: str, content: str, force: bool = False, **kwargs) -> Article:
+    def add_article(self, title: str, content: str, force: bool = False, **kwargs: Any) -> Article:
         """Adds an article to the newspaper.
 
         Args:
@@ -122,7 +122,7 @@ class Newspaper:
         logger.info("Crossword added.")
         return crossword
 
-    def generate(self) -> Dict:
+    def generate(self) -> Dict[str, Any]:
         """Generates a structured dictionary of the entire newspaper."""
         if not any([self.articles, self.quizzes, self.sudokus, self.crosswords]):
             raise NewspaperFrameworkError(

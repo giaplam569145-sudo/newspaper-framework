@@ -1,6 +1,7 @@
 """Rest API Server entry point."""
 
 import logging
+from typing import Any, Dict, Tuple
 
 from flask import Flask, request, jsonify
 from src.newspaper.core import Newspaper
@@ -15,10 +16,10 @@ logger = logging.getLogger(__name__)
 class NewspaperAPI:
     """A RESTful API wrapper for the Newspaper Framework."""
 
-    def __init__(self):
-        self.newspapers: dict[str, Newspaper] = {}
+    def __init__(self) -> None:
+        self.newspapers: Dict[str, Newspaper] = {}
 
-    def create_newspaper(self, title: str) -> dict:
+    def create_newspaper(self, title: str) -> Dict[str, str]:
         newspaper_id = f"np_{len(self.newspapers)}"
         paper = Newspaper(title)
         self.newspapers[newspaper_id] = paper
@@ -29,7 +30,7 @@ api = NewspaperAPI()
 
 
 @app.route('/api/newspaper', methods=['POST'])
-def create_newspaper_endpoint():
+def create_newspaper_endpoint() -> Tuple[Any, int]:
     data = request.get_json()
     if not data or "title" not in data:
         return jsonify({"error": "Title is required"}), 400
@@ -41,7 +42,7 @@ def create_newspaper_endpoint():
 
 
 @app.route('/api/newspaper/<newspaper_id>/article', methods=['POST'])
-def add_article_endpoint(newspaper_id):
+def add_article_endpoint(newspaper_id: str) -> Tuple[Any, int]:
     if newspaper_id not in api.newspapers:
         return jsonify({"error": "Newspaper not found"}), 404
 
@@ -65,7 +66,7 @@ def add_article_endpoint(newspaper_id):
 
 
 @app.route('/api/newspaper/<newspaper_id>/quiz', methods=['POST'])
-def add_quiz_endpoint(newspaper_id):
+def add_quiz_endpoint(newspaper_id: str) -> Tuple[Any, int]:
     if newspaper_id not in api.newspapers:
         return jsonify({"error": "Newspaper not found"}), 404
 
@@ -90,7 +91,7 @@ def add_quiz_endpoint(newspaper_id):
 
 
 @app.route('/api/newspaper/<newspaper_id>/sudoku', methods=['POST'])
-def add_sudoku_endpoint(newspaper_id):
+def add_sudoku_endpoint(newspaper_id: str) -> Tuple[Any, int]:
     if newspaper_id not in api.newspapers:
         return jsonify({"error": "Newspaper not found"}), 404
 
@@ -106,7 +107,7 @@ def add_sudoku_endpoint(newspaper_id):
 
 
 @app.route('/api/newspaper/<newspaper_id>/crossword', methods=['POST'])
-def add_crossword_endpoint(newspaper_id):
+def add_crossword_endpoint(newspaper_id: str) -> Tuple[Any, int]:
     if newspaper_id not in api.newspapers:
         return jsonify({"error": "Newspaper not found"}), 404
 
@@ -128,7 +129,7 @@ def add_crossword_endpoint(newspaper_id):
 
 
 @app.route('/api/newspaper/<newspaper_id>/export', methods=['POST'])
-def export_newspaper_endpoint(newspaper_id):
+def export_newspaper_endpoint(newspaper_id: str) -> Tuple[Any, int]:
     if newspaper_id not in api.newspapers:
         return jsonify({"error": "Newspaper not found"}), 404
 
@@ -145,12 +146,12 @@ def export_newspaper_endpoint(newspaper_id):
             paper.export_json(filename)
         else:
             return jsonify({"error": "Unsupported format. Use html or json."}), 400
-        return jsonify({"success": True, "filename": filename})
+        return jsonify({"success": True, "filename": filename}), 200
     except NewspaperFrameworkError as e:
         return jsonify({"error": str(e)}), 400
 
 
-def run_server():
+def run_server() -> None:
     logging.basicConfig(level=logging.INFO)
     logger.info("Starting Newspaper Framework API Server...")
     app.run(debug=True, host='0.0.0.0', port=5000)

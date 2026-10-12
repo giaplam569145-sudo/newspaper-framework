@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class HtmlExporter(Exporter):
     """Exports newspaper data to HTML."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # We can use PackageLoader if installed as package, or FileSystemLoader for local dev.
         # Trying PackageLoader first.
         try:

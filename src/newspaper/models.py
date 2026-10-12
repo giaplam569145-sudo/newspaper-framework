@@ -28,7 +28,7 @@ class Article:
     image_path: Optional[str] = None
     image_caption: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Performs validation and sanitization after initialization."""
         self.title = self.title.strip()
 
@@ -81,7 +81,7 @@ class MediaConfig:
     image_quality: int = 85
     supported_formats: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initializes default supported formats if not provided."""
         if self.supported_formats is None:
             self.supported_formats = ["png", "jpg", "jpeg", "gif", "svg"]
@@ -102,7 +102,7 @@ class Question:
     correct_index: int
     category: str = "Allgemein"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validates the question's integrity after initialization."""
         if not self.question or len(self.question.strip()) < 5:
             raise NewspaperFrameworkError("Question is too short (min. 5 characters).")

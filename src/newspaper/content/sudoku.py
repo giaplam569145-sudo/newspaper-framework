@@ -22,10 +22,10 @@ class SudokuGenerator(ContentGenerator):
         base = 3
         side = base * base
 
-        def pattern(r, c):
+        def pattern(r: int, c: int) -> int:
             return (base * (r % base) + r // base + c) % side
 
-        def shuffle(s):
+        def shuffle(s: range) -> list[int]:
             return random.sample(s, len(s))
 
         r_base = range(base)

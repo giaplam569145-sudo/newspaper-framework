@@ -1,6 +1,7 @@
 """MCP Server entry point."""
 
 import logging
+from typing import Any, Dict, List, Optional
 
 from src.newspaper.core import Newspaper
 from src.newspaper.content.quiz import QuizSystem
@@ -12,10 +13,10 @@ logger = logging.getLogger(__name__)
 class NewspaperMCPServer:
     """An MCP server for the Newspaper Framework."""
 
-    def __init__(self):
-        self.newspapers: dict[str, Newspaper] = {}
+    def __init__(self) -> None:
+        self.newspapers: Dict[str, Newspaper] = {}
 
-    def create_newspaper(self, title: str) -> dict:
+    def create_newspaper(self, title: str) -> Dict[str, str]:
         try:
             paper = Newspaper(title)
             newspaper_id = f"np_{len(self.newspapers)}"
@@ -24,7 +25,7 @@ class NewspaperMCPServer:
         except NewspaperFrameworkError as e:
             return {"error": str(e)}
 
-    def add_article(self, newspaper_id: str, article_data: dict) -> dict:
+    def add_article(self, newspaper_id: str, article_data: Dict[str, Any]) -> Dict[str, Any]:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
 
@@ -42,7 +43,7 @@ class NewspaperMCPServer:
         except NewspaperFrameworkError as e:
             return {"error": str(e)}
 
-    def add_quiz(self, newspaper_id: str, quiz_data: dict) -> dict:
+    def add_quiz(self, newspaper_id: str, quiz_data: Dict[str, Any]) -> Dict[str, Any]:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
 
@@ -60,7 +61,7 @@ class NewspaperMCPServer:
         except (NewspaperFrameworkError, KeyError) as e:
             return {"error": str(e)}
 
-    def add_sudoku(self, newspaper_id: str, difficulty: str = "medium") -> dict:
+    def add_sudoku(self, newspaper_id: str, difficulty: str = "medium") -> Dict[str, Any]:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
 
@@ -71,7 +72,7 @@ class NewspaperMCPServer:
         paper.add_sudoku(difficulty)
         return {"success": True, "sudoku_id": len(paper.sudokus)}
 
-    def export_newspaper(self, newspaper_id: str, format: str = "html") -> dict:
+    def export_newspaper(self, newspaper_id: str, format: str = "html") -> Dict[str, Any]:
         if newspaper_id not in self.newspapers:
             return {"error": "Newspaper not found"}
 
@@ -90,7 +91,7 @@ class NewspaperMCPServer:
             return {"error": str(e)}
 
 
-def get_tools():
+def get_tools() -> List[Dict[str, Any]]:
     """Returns tool definitions for MCP integration."""
     return [
         {
@@ -138,13 +139,13 @@ def get_tools():
     ]
 
 
-async def run_server():
+async def run_server() -> None:
     """Run the MCP server. Requires the mcp package to be installed."""
     logging.basicConfig(level=logging.INFO)
     logger.info("Starting Newspaper Framework MCP Server...")
 
     try:
-        from mcp import MCPServer
+        from mcp import MCPServer  # type: ignore[attr-defined]
     except ImportError:
         logger.error(
             "MCP package not installed. Install with: pip install mcp"

@@ -80,7 +80,8 @@ The HTML template (`base.html`) includes inline JavaScript for:
 ## Verifying Changes
 
 ```bash
-python -m pytest tests/ -v
+python -m pytest tests/ -v          # 86 tests
+python -m mypy src/ --strict --explicit-package-bases  # 0 errors
 python sample_generator.py
 ```
 

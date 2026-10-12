@@ -1,6 +1,6 @@
 """Crossword generator implementation."""
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict
 from ..exceptions import NewspaperFrameworkError
 from .base import ContentGenerator
@@ -25,14 +25,14 @@ class CrosswordGenerator(ContentGenerator):
         clues (Dict[str, str]): A dictionary of clues for the words.
     """
 
-    def __init__(self, words: List[str], clues: Dict[str, str]):
+    def __init__(self, words: List[str], clues: Dict[str, str]) -> None:
         self.words = words
         self.clues = clues
-        self.generated_crossword = None
+        self.generated_crossword: Optional[Crossword] = None
 
     def generate(self) -> Crossword:
         try:
-            from pycrossword import generate_crossword
+            from pycrossword import generate_crossword  # type: ignore[import-untyped]
         except ImportError:
             raise NewspaperFrameworkError(
                 "pycrossword-generator is required for crossword generation. "
@@ -43,7 +43,7 @@ class CrosswordGenerator(ContentGenerator):
 
         grid = [['' for _ in range(dimensions[0])] for _ in range(dimensions[1])]
         clues: Dict[str, List[Tuple[int, str]]] = {"horizontal": [], "vertical": []}
-        word_starts: Dict[tuple, int] = {}
+        word_starts: Dict[Tuple[int, int], int] = {}
 
         clue_number = 1
         for word, x, y, is_horizontal in placed_words:
