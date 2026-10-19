@@ -2,162 +2,232 @@
   <img src="assets/banner.svg" alt="Chronicle AI - Newspaper Framework for LLMs Banner" width="100%">
 </p>
 
-# Chronicle AI - Newspaper Framework for LLMs
+# Chronicle AI – Newspaper Framework for LLMs
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/tests-86%20passed-success.svg)](#running)
+[![Tests Status](https://img.shields.io/badge/tests-86%20passed-success.svg)](#-ausführung--verifikation)
 
-A modular, fault-tolerant Python framework designed for AI-powered newspaper production. Supports interactive articles, quizzes, sudoku, crosswords, and multiple export formats with responsive, fully-animated HTML outputs.
+**Chronicle AI** ist ein modulares, fehlerstolerantes Python-Framework zur automatisierten und KI-gestützten Zeitungsproduktion. Es ermöglicht Large Language Models (LLMs) und autonomen Agenten, hochwertige, interaktive Zeitungen mit Artikeln, Bildern, Quizzes, Sudoku- und Kreuzworträtseln zu generieren.
+
+Die Ausgaben werden als moderne, voll interaktive HTML-Dateien mit integrierter JavaScript-Logik oder als strukturiertes JSON exportiert.
 
 ---
 
 ## 🎨 CI & Design System ("Chronicle Modern Editorial")
 
-The framework features a custom-designed **Corporate Identity (CI)** and modern UI/UX system:
+Das Framework beinhaltet ein maßgeschneidertes Design-System und Corporate Identity (CI) für ansprechende digitale Zeitungen:
 
-- **App Logo & Banner**: Distinctive SVG branding (`assets/logo.svg` & `assets/banner.svg`).
-- **Dark Mode & Light Mode**: Built-in system detection (`prefers-color-scheme`) with interactive manual toggle switch and `localStorage` state persistence.
-- **Directional & Micro-Animations**:
-  - **Reading Direction Progress Bar**: Top-anchored indicator tracking reading depth.
-  - **Staggered Entrance**: Articles and cards slide and fade up gracefully into view.
-  - **Interactive Feedback**: Pulse success animations on correct quiz/sudoku/crossword inputs and shake animations on errors.
-  - **Auto-Advance Crossword Inputs**: Smooth directional navigation as letters are typed.
-- **Responsive Editorial Grid**: CSS Grid/Flexbox layout featuring lead feature articles and structured puzzle cards optimized for mobile, tablet, and desktop viewports.
-
----
-
-## 🚀 Quick Start
-
-```python
-from src.newspaper import Newspaper, QuizSystem
-from src.newspaper.content.crossword import CrosswordGenerator
-
-# Initialize newspaper
-paper = Newspaper("AI Morning News")
-
-# Add lead article
-paper.add_article(
-    title="AI Revolutionizes Newspaper Production",
-    content="The Newspaper Framework allows LLMs to create high-quality, interactive newspapers with minimal effort...",
-    author="AI Editor",
-    category="Technology",
-    priority=1
-)
-
-# Set brand logo
-paper.set_logo("assets/logo.svg")
-
-# Add interactive quiz
-quiz = QuizSystem("Technology Quiz")
-quiz.add_question(
-    "What is AI?",
-    ["Artificial Intelligence", "Kitchen International", "Merchant Institute", "No Idea"],
-    0,
-    "Technology"
-)
-paper.add_quiz(quiz)
-
-# Add Sudoku puzzle
-paper.add_sudoku("medium")
-
-# Add Crossword puzzle
-crossword = CrosswordGenerator(
-    words=["python", "html"],
-    clues={"python": "A popular programming language.", "html": "A markup language for the web."},
-)
-paper.add_crossword(crossword.generate())
-
-# Export interactive HTML & structured JSON
-paper.export_html("sample_newspaper.html")
-paper.export_json("sample_newspaper.json")
-```
+- **Marken-Identität**: Modernes SVG-Logo (`assets/logo.svg`) und Projektbanner (`assets/banner.svg`).
+- **Dark & Light Mode**: Automatische Erkennung der Systemeinstellung (`prefers-color-scheme`) mit manuellem Umschalter und dauerhafter `localStorage`-Speicherung.
+- **Interaktive HTML-Widgets**:
+  - **Lesefortschrittsbalken**: Dynamischer Indikator am oberen Bildschirmrand, der die Lesetiefe anzeigt.
+  - **Interaktives Quiz**: Auswertung von Multiple-Choice-Fragen per Klick mit optischem Feedback (Grün/Rot) und visuellen Shake/Pulse-Effekten.
+  - **Sudoku-Spiele**: 9x9-Gitter mit Validierung der Eingaben gegen die Lösung (`data-solution`) und Restriktion auf Zahlen (1–9).
+  - **Kreuzworträtsel**: Dynamisches Buchstabenfeld mit automatischer Cursor-Weiterschaltung und Überprüfung gegen die Antworteingaben (`data-answer`).
+- **Responsive Layout-Grid**: Flexibles CSS-Grid für Haupt- und Nebenartikel sowie Medien-Cards, optimiert für Mobile, Tablet und Desktop.
 
 ---
 
-## ✨ Features
+## 💻 Installation & Voraussetzungen
 
-- **LLM-Friendly API**: Intuitive method names with fault-tolerant error handling (`force=True`).
-- **Interactive HTML Outputs**: Embedded JavaScript evaluation for quizzes, sudoku validation, and crossword checking.
-- **Automatic Validation**: Validation checks on titles, content length, and puzzle structures.
-- **Modular Architecture**: Clean `src/` layout adhering to DRY and SOLID software design principles.
-- **Rich Content Support**: Articles, multi-question quizzes, 9x9 Sudoku puzzles, and dynamic Crosswords.
-- **Multiple Export Formats**: HTML (Jinja2 templates with autoescape and theme switching) and JSON.
-- **REST & MCP Server Integration**: Flask-based HTTP API and Model Context Protocol (MCP) server for direct LLM tool usage.
+### Systemvoraussetzungen
+- **Python**: Version 3.12 oder neuer
+- **Betriebssystem**: Linux, macOS oder Windows
 
----
+### Paket-Installation
 
-## 💻 Installation
+Installieren Sie die Abhängigkeiten über PIP:
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
-## 📁 Project Structure
-
-```
-assets/                 CI branding assets (logo.svg, banner.svg)
-src/newspaper/          Core Python package
-  core.py               Newspaper class (main entry point)
-  models.py             Article, Question, LayoutConfig, MediaConfig models
-  exceptions.py         NewspaperFrameworkError + NewspaperFrameworkWarning
-  content/              Quiz, Sudoku, Crossword generators
-  export/               HTML (Jinja2) and JSON exporters
-  export/templates/     Interactive HTML template with Dark/Light mode & JS animations
-src/api/                REST API and MCP server endpoints
-tests/                  pytest unit test suite
-run_api.py              REST API server runner
-run_mcp.py              MCP server runner
-sample_generator.py     Example newspaper generator script
-```
+#### Kern- und Optional-Abhängigkeiten
+- **Kern-Framework** (`src/newspaper`): Benötigt Python Standardbibliothek und `jinja2`.
+- **REST API**: Benötigt `flask`.
+- **MCP Server**: Benötigt `mcp`.
+- **Kreuzworträtsel-Generator**: Benötigt `pycrossword-generator` (wird bei Aufruf dynamisch geladen).
 
 ---
 
-## 🧪 Running & Verification
+## 🚀 Schnellstart
+
+Das folgende Beispiel zeigt, wie eine Zeitung in wenigen Zeilen Code erstellt und exportiert wird:
+
+```python
+from src.newspaper import Newspaper, QuizSystem
+from src.newspaper.content.crossword import CrosswordGenerator
+
+# 1. Zeitung initialisieren
+paper = Newspaper("AI Morning News")
+
+# 2. Logo festlegen (optional)
+paper.set_logo("assets/logo.svg")
+
+# 3. Hauptartikel hinzufügen
+paper.add_article(
+    title="KI revolutioniert die Zeitungsproduktion",
+    content="Das Newspaper Framework ermöglicht es LLMs, hochwertige, interaktive Zeitungen mit minimalem Aufwand zu erstellen...",
+    author="KI-Redakteur",
+    category="Technologie",
+    priority=1
+)
+
+# 4. Interaktives Quiz hinzufügen
+quiz = QuizSystem("Technologie-Quiz")
+quiz.add_question(
+    question="Was bedeutet AI?",
+    options=["Artificial Intelligence", "Automated Interface", "Analog Input", "Keine Ahnung"],
+    correct_index=0,
+    category="Technologie"
+)
+paper.add_quiz(quiz)
+
+# 5. Sudoku-Rätsel hinzufügen
+paper.add_sudoku(difficulty="medium")
+
+# 6. Kreuzworträtsel hinzufügen
+crossword_gen = CrosswordGenerator(
+    words=["python", "html"],
+    clues={
+        "python": "Beliebte Programmiersprache.",
+        "html": "Auszeichnungssprache für das Web."
+    }
+)
+paper.add_crossword(crossword_gen.generate())
+
+# 7. Interaktives HTML und strukturiertes JSON exportieren
+paper.export_html("meine_zeitung.html")
+paper.export_json("meine_zeitung.json")
+```
+
+---
+
+## 📁 Architektur & Projektstruktur
+
+```
+assets/                 CI-Branding-Dateien (logo.svg, banner.svg)
+src/
+  newspaper/            Kern-Paket
+    __init__.py         Öffentliche Exporte (Newspaper, Article, Generatoren, Exceptions)
+    core.py             Newspaper Hauptklasse (Zentraler Einstiegspunkt)
+    models.py           Dataclasses (Article, LayoutConfig, MediaConfig, Question)
+    exceptions.py       Fehlerklassen (NewspaperFrameworkError, NewspaperFrameworkWarning)
+    content/            Inhalts-Generatoren
+      base.py           ContentGenerator (Abstrakte Basisklasse)
+      quiz.py           QuizSystem & Fragen-Verwaltung
+      sudoku.py         SudokuGenerator (9x9 Gitter-Generierung)
+      crossword.py      CrosswordGenerator (Einbindung von pycrossword)
+    export/             Exporter für Zielformate
+      base.py           Exporter (Abstrakte Basisklasse)
+      html_exporter.py  HtmlExporter (Jinja2-Template-Rendering)
+      json_exporter.py  JsonExporter (Strukturierte JSON-Ausgabe)
+      templates/
+        base.html       Interaktives HTML-Template mit Dark/Light-Mode & JS
+  api/                  Schnittstellen für externe Anbindung
+    rest.py             Flask REST API (HTTP Endpunkte)
+    mcp_server.py       Model Context Protocol (MCP) Server
+tests/                  pytest Testsuite (86 Unit-Tests)
+pyproject.toml          Projekt-Konfiguration (Pytest, Ruff, Mypy, Setuptools)
+requirements.txt        Projekt-Abhängigkeiten
+run_api.py              Einstiegspunkt für REST API Server
+run_mcp.py              Einstiegspunkt für MCP Server
+sample_generator.py     Beispielskript zur Erzeugung einer Demo-Zeitung
+```
+
+---
+
+## 📖 Python Core API Referenz
+
+### Hauptklasse `Newspaper` (`src.newspaper.core`)
+
+| Methode / Attribut | Typ / Parameter | Beschreibung |
+|-------------------|-----------------|--------------|
+| `__init__(title, layout=None, media=None)` | `title: str` | Initialisiert die Zeitung. Standardtitel: `"Morgenzeitung"`. |
+| `set_logo(logo_path)` | `logo_path: str -> bool` | Prüft die Datei und setzt den Pfad für das Header-Logo. Gibt `False` zurück, wenn Datei fehlt. |
+| `add_article(title, content, force=False, **kwargs)` | `title: str, content: str, force: bool -> Article` | Fügt einen Artikel hinzu. Mindestlänge Inhalt: 10 Zeichen. Bei `force=True` wird zu kurzer Inhalt automatisch ergänzt. |
+| `add_quiz(quiz)` | `quiz: QuizSystem -> QuizSystem` | Fügt ein instanziiertes Quiz hinzu. |
+| `add_sudoku(difficulty)` | `difficulty: str -> SudokuGenerator` | Generiert und fügt ein 9x9 Sudoku hinzu (`"easy"`, `"medium"`, `"hard"`). |
+| `add_crossword(crossword)` | `crossword: Crossword -> Crossword` | Fügt ein Kreuzworträtsel-Objekt hinzu. |
+| `generate()` | `-> Dict[str, Any]` | Liefert ein strukturiertes Dictionary mit Artikeln (sortiert nach Priorität), Quizzes, Rätseln und Statistiken. |
+| `export_html(filename)` | `filename: str -> str` | Rendert und speichert die interaktive HTML-Datei via Jinja2. |
+| `export_json(filename)` | `filename: str -> str` | Speichert das Zeitungsobjekt als JSON-Datei. |
+
+### Datenmodelle (`src.newspaper.models`)
+
+- **`Article`**: `title: str`, `content: str`, `author: str = "Unbekannter Autor"`, `category: str = "Allgemein"`, `priority: int = 1` (geclampt auf 1–5), `image_path: Optional[str]`, `image_caption: Optional[str]`.
+- **`LayoutConfig`**: Steuert Theme-Einstellungen und Spaltenanzahl.
+- **`MediaConfig`**: Pfade für Header-Logo und Medien.
+
+### Fehlerbehandlung & Validierung (`src.newspaper.exceptions`)
+
+- **`NewspaperFrameworkError`**: Wird bei ungültigen Eingaben geworfen (z.B. leerer Titel, Artikelinhalt unter 10 Zeichen ohne `force=True`, falscher Antwort-Index im Quiz).
+- **`NewspaperFrameworkWarning`**: Warnung bei nicht-kritischen Problemen (z.B. fehlende Bilddateien oder Logo).
+
+---
+
+## 🌐 REST API & MCP Server Integration
+
+### REST API Server (`run_api.py`)
+
+Der REST API Server basiert auf Flask und stellt HTTP-Endpunkte zur Steuerung bereit:
 
 ```bash
-# Generate sample newspaper (HTML & JSON)
-python sample_generator.py
-
-# Start REST API server
 python run_api.py
+# Läuft standardmäßig auf http://0.0.0.0:5000
+```
 
-# Run full pytest test suite
+#### REST Endpunkte
+
+| HTTP Methode | Endpunkt | Request Body (JSON) | Beschreibung |
+|--------------|----------|---------------------|--------------|
+| `POST` | `/api/newspaper` | `{"title": "..."}` | Erstellt eine neue Zeitungsinstanz und gibt `id` zurück. |
+| `POST` | `/api/newspaper/<id>/article` | `{"title": "...", "content": "...", "author": "...", "category": "...", "priority": 1, "force": false}` | Fügt einen Artikel hinzu. |
+| `POST` | `/api/newspaper/<id>/quiz` | `{"title": "...", "questions": [{"question": "...", "options": [...], "correct_index": 0}]}` | Fügt ein Quiz hinzu. |
+| `POST` | `/api/newspaper/<id>/sudoku` | `{"difficulty": "easy"|"medium"|"hard"}` | Generiert ein Sudoku. |
+| `POST` | `/api/newspaper/<id>/crossword` | `{"words": [...], "clues": {...}}` | Generiert ein Kreuzworträtsel. |
+| `POST` | `/api/newspaper/<id>/export` | `{"format": "html"|"json"}` | Exportiert die Zeitung in das angegebene Format. |
+
+---
+
+### Model Context Protocol (MCP) Server (`run_mcp.py`)
+
+Für die direkte Anbindung an KI-Modelle und Agenten (z. B. Anthropic Claude, MCP-Clients) bietet das Framework eine integrierte MCP-Schnittstelle:
+
+```bash
+python run_mcp.py
+```
+
+#### Verfügbare MCP Tools
+
+- **`create_newspaper(title)`**: Erstellt eine Zeitung mit Titel.
+- **`add_article(newspaper_id, title, content, author, category, priority)`**: Fügt einen Artikel hinzu.
+- **`add_quiz(newspaper_id, title, questions)`**: Fügt ein Quiz mit Fragen hinzu.
+- **`add_sudoku(newspaper_id, difficulty)`**: Generiert ein Sudoku-Rätsel.
+- **`export_newspaper(newspaper_id, format)`**: Exportiert die Zeitung als `"html"` oder `"json"`.
+
+---
+
+## 🧪 Ausführung & Verifikation
+
+### Demo-Zeitung generieren
+
+```bash
+python sample_generator.py
+```
+Erzeugt die Beispieldateien `sample_newspaper.html` und `sample_newspaper.json`.
+
+### Testsuite ausführen
+
+Das Projekt verfügt über eine umfassende pytest Testsuite mit 86 Tests:
+
+```bash
 python -m pytest
 ```
 
 ---
 
-## 📖 API Reference
+## 📄 Lizenz
 
-### Newspaper Core Methods
-
-| Method | Description |
-|--------|-------------|
-| `add_article(title, content, force=False, **kwargs)` | Adds an article (min. 10 chars content unless `force=True`) |
-| `set_logo(logo_path)` | Sets newspaper header logo |
-| `add_quiz(quiz)` | Adds a `QuizSystem` instance |
-| `add_sudoku(difficulty)` | Generates and adds a Sudoku ("easy", "medium", "hard") |
-| `add_crossword(crossword)` | Adds a crossword puzzle |
-| `generate()` | Returns structured dictionary representation |
-| `export_html(filename)` | Exports interactive, responsive HTML output |
-| `export_json(filename)` | Exports structured JSON output |
-
-### REST API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/newspaper` | POST | Create a new newspaper instance |
-| `/api/newspaper/<id>/article` | POST | Add an article to a newspaper |
-| `/api/newspaper/<id>/quiz` | POST | Add a quiz to a newspaper |
-| `/api/newspaper/<id>/sudoku` | POST | Add a sudoku to a newspaper |
-| `/api/newspaper/<id>/crossword` | POST | Add a crossword to a newspaper |
-| `/api/newspaper/<id>/export` | POST | Export newspaper as HTML or JSON |
-
----
-
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE) for details.
+Dieses Projekt steht unter der **MIT Lizenz**. Siehe [LICENSE](LICENSE) für Details.
